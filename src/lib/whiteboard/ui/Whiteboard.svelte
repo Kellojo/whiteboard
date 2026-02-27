@@ -54,7 +54,9 @@
 
   function handleExport() {
     const boardState = get(board);
-    const payload = SerializationService.exportBoard(boardState);
+    const payload = SerializationService.exportBoard(boardState, {
+      viewport: get(viewport),
+    });
     const blob = new Blob([payload], { type: "application/json" });
     const href = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -73,7 +75,10 @@
 
     const payload = await file.text();
     const imported = SerializationService.importBoard(payload);
-    board.set(imported);
+    board.set(imported.board);
+    if (imported.viewport) {
+      viewport.set(imported.viewport);
+    }
     selectedElementIds.set(new Set());
     input.value = "";
   }

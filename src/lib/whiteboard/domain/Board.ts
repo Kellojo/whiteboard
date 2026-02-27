@@ -3,6 +3,11 @@ import type { Point } from "./types";
 
 export interface BoardJSON {
   elements: ReturnType<CanvasElement["toJSON"]>[];
+  viewport?: {
+    zoom: number;
+    offsetX: number;
+    offsetY: number;
+  };
 }
 
 export class Board {

@@ -93,6 +93,7 @@
   }
 
   .hint {
+    user-select: none;
     position: fixed;
     left: 50%;
     bottom: 74px;

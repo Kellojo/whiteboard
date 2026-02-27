@@ -219,6 +219,7 @@ export class BoardController {
           this.activeResize.initial,
           world,
           this.activeResize.handle,
+          target instanceof ImageElement,
         );
         target.x = resized.x;
         target.y = resized.y;
@@ -517,7 +518,12 @@ function resizeFromHandle(
   initial: BoundsSnapshot,
   point: Point,
   handle: ResizeHandle,
+  preserveAspectRatio = false,
 ): BoundsSnapshot {
+  if (preserveAspectRatio) {
+    return resizeFromHandleWithAspectRatio(initial, point, handle);
+  }
+
   let left = initial.x;
   let right = initial.x + initial.width;
   let top = initial.y;
@@ -536,6 +542,74 @@ function resizeFromHandle(
   if (handle === "sw" || handle === "se") {
     bottom = Math.max(point.y, top + minSize);
   }
+
+  return {
+    x: left,
+    y: top,
+    width: right - left,
+    height: bottom - top,
+  };
+}
+
+function resizeFromHandleWithAspectRatio(
+  initial: BoundsSnapshot,
+  point: Point,
+  handle: ResizeHandle,
+): BoundsSnapshot {
+  const minSize = 12;
+  const initialWidth = Math.max(minSize, initial.width);
+  const initialHeight = Math.max(minSize, initial.height);
+  const aspectRatio = initialWidth / initialHeight;
+
+  let anchorX = initial.x;
+  let anchorY = initial.y;
+  let horizontalSign = 1;
+  let verticalSign = 1;
+
+  if (handle === "nw") {
+    anchorX = initial.x + initial.width;
+    anchorY = initial.y + initial.height;
+    horizontalSign = -1;
+    verticalSign = -1;
+  }
+  if (handle === "ne") {
+    anchorX = initial.x;
+    anchorY = initial.y + initial.height;
+    horizontalSign = 1;
+    verticalSign = -1;
+  }
+  if (handle === "sw") {
+    anchorX = initial.x + initial.width;
+    anchorY = initial.y;
+    horizontalSign = -1;
+    verticalSign = 1;
+  }
+  if (handle === "se") {
+    anchorX = initial.x;
+    anchorY = initial.y;
+    horizontalSign = 1;
+    verticalSign = 1;
+  }
+
+  const rawWidth = Math.abs(point.x - anchorX);
+  const rawHeight = Math.abs(point.y - anchorY);
+
+  let width = Math.min(rawWidth, rawHeight * aspectRatio);
+  let height = width / aspectRatio;
+
+  if (width < minSize) {
+    width = minSize;
+    height = width / aspectRatio;
+  }
+  if (height < minSize) {
+    height = minSize;
+    width = height * aspectRatio;
+  }
+
+  const left = horizontalSign > 0 ? anchorX : anchorX - width;
+  const right = horizontalSign > 0 ? anchorX + width : anchorX;
+  const top = verticalSign > 0 ? anchorY : anchorY - height;
+  const bottom = verticalSign > 0 ? anchorY + height : anchorY;
 
   return {
     x: left,
