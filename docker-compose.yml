@@ -1,0 +1,14 @@
+services:
+  whiteboard:
+    build: .
+    container_name: whiteboard-app
+    ports:
+      - "3000:3000"
+    environment:
+      - ORIGIN=http://localhost:3000
+    volumes:
+      - whiteboards_data:/app/.whiteboards
+    restart: unless-stopped
+
+volumes:
+  whiteboards_data:
