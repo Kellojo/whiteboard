@@ -46,36 +46,41 @@
 <style>
   .toolbar {
     position: fixed;
-    top: 12px;
-    left: 12px;
+    top: 1rem;
+    left: 1rem;
     z-index: 20;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 0.5rem;
   }
 
   .actions {
     display: flex;
-    gap: 8px;
     flex-wrap: wrap;
-    padding: 8px;
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
+
+    gap: 0.5rem;
+    padding: 1rem;
+
+    border-radius: 1rem;
+    background-color: var(--backgroundDark);
+    border: 1px solid var(--borderColor);
+    box-shadow: var(--shadow-l);
   }
 
   .tools {
     position: fixed;
     left: 50%;
-    bottom: 16px;
+    bottom: 1rem;
     transform: translateX(-50%);
     z-index: 30;
     display: flex;
-    gap: 8px;
-    padding: 10px;
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 9999px;
+    gap: 0.5rem;
+    padding: 1rem;
+
+    border-radius: 1rem;
+    background-color: var(--backgroundDark);
+    border: 1px solid var(--borderColor);
+    box-shadow: var(--shadow-l);
   }
 
   button,
@@ -96,7 +101,7 @@
     user-select: none;
     position: fixed;
     left: 50%;
-    bottom: 74px;
+    bottom: 88px;
     transform: translateX(-50%);
     z-index: 20;
     margin: 0;

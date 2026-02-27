@@ -32,11 +32,17 @@ interface BoundsSnapshot {
 }
 
 type CreatableElement = "rectangle" | "ellipse" | "text" | "sticky";
+const FONT_SIZE_STEPS = [
+  10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 44, 48,
+] as const;
 
 export interface SelectedStyleState {
   fillColor: string | null;
   borderColor: string | null;
   textAlign: TextAlign | null;
+  fontSize: number | null;
+  canDecreaseFontSize: boolean;
+  canIncreaseFontSize: boolean;
 }
 
 export class BoardController {
@@ -383,7 +389,41 @@ export class BoardController {
           selected.textAlign === "right")
           ? selected.textAlign
           : null,
+      fontSize:
+        "fontSize" in selected && typeof selected.fontSize === "number"
+          ? selected.fontSize
+          : null,
+      canDecreaseFontSize: this.canAdjustFontSize(selected, "decrease"),
+      canIncreaseFontSize: this.canAdjustFontSize(selected, "increase"),
     };
+  }
+
+  decreaseSelectedFontSize(): void {
+    this.applyStyleToSingleSelected((element) => {
+      if (!("fontSize" in element) || typeof element.fontSize !== "number") {
+        return;
+      }
+      const current = element.fontSize;
+      const lower = [...FONT_SIZE_STEPS]
+        .reverse()
+        .find((size) => size < current);
+      if (lower) {
+        element.fontSize = lower;
+      }
+    });
+  }
+
+  increaseSelectedFontSize(): void {
+    this.applyStyleToSingleSelected((element) => {
+      if (!("fontSize" in element) || typeof element.fontSize !== "number") {
+        return;
+      }
+      const current = element.fontSize;
+      const higher = FONT_SIZE_STEPS.find((size) => size > current);
+      if (higher) {
+        element.fontSize = higher;
+      }
+    });
   }
 
   setSelectedFillColor(fillColor: string): void {
@@ -483,6 +523,23 @@ export class BoardController {
       }
     }
     return null;
+  }
+
+  private canAdjustFontSize(
+    element: CanvasElement,
+    direction: "decrease" | "increase",
+  ): boolean {
+    if (!("fontSize" in element) || typeof element.fontSize !== "number") {
+      return false;
+    }
+
+    const fontSize = element.fontSize;
+
+    if (direction === "decrease") {
+      return [...FONT_SIZE_STEPS].some((size) => size < fontSize);
+    }
+
+    return FONT_SIZE_STEPS.some((size) => size > fontSize);
   }
 }
 

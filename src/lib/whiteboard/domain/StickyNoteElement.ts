@@ -3,6 +3,7 @@ import type { CanvasElementJSON, Point, TextAlign } from "./types";
 
 export class StickyNoteElement extends CanvasElement {
   text: string;
+  fontSize: number;
   fillColor: string;
   borderColor: string;
   textAlign: TextAlign;
@@ -10,6 +11,7 @@ export class StickyNoteElement extends CanvasElement {
   constructor(
     params: ConstructorParameters<typeof CanvasElement>[0] & {
       text?: string;
+      fontSize?: number;
       fillColor?: string;
       borderColor?: string;
       textAlign?: TextAlign;
@@ -17,6 +19,7 @@ export class StickyNoteElement extends CanvasElement {
   ) {
     super(params);
     this.text = params.text ?? "Sticky note";
+    this.fontSize = params.fontSize ?? 16;
     this.fillColor = params.fillColor ?? "#fef08a";
     this.borderColor = params.borderColor ?? "#854d0e";
     this.textAlign = params.textAlign ?? "left";
@@ -36,7 +39,7 @@ export class StickyNoteElement extends CanvasElement {
     }
 
     ctx.fillStyle = "#1f2937";
-    ctx.font = "16px Inter, system-ui, sans-serif";
+    ctx.font = `${this.fontSize}px Inter, system-ui, sans-serif`;
     ctx.textBaseline = "top";
     ctx.textAlign = this.textAlign;
     const textX =
@@ -69,6 +72,7 @@ export class StickyNoteElement extends CanvasElement {
       rotation: this.rotation,
       isSelected: this.isSelected,
       text: this.text,
+      fontSize: this.fontSize,
       fillColor: this.fillColor,
       borderColor: this.borderColor,
       textAlign: this.textAlign,

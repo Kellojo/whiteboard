@@ -18,6 +18,7 @@
     style: NonNullable<ReturnType<BoardController["getSelectedStyleState"]>>;
   } | null = null;
   const fillSwatches = [
+    "transparent",
     "#ffffff",
     "#fef08a",
     "#dbeafe",
@@ -26,6 +27,7 @@
     "#f5f3ff",
   ];
   const borderSwatches = [
+    "transparent",
     "#111827",
     "#374151",
     "#2563eb",
@@ -190,7 +192,12 @@
       return null;
     }
 
-    if (!style.fillColor && !style.borderColor && !style.textAlign) {
+    if (
+      !style.fillColor &&
+      !style.borderColor &&
+      !style.textAlign &&
+      style.fontSize === null
+    ) {
       return null;
     }
 
@@ -238,6 +245,28 @@
       style:left={`${selectedOverlay.x}px`}
       style:top={`${selectedOverlay.y}px`}
     >
+      {#if selectedOverlay.style.fontSize !== null}
+        <div class="mini-group font-size-group">
+          <button
+            type="button"
+            disabled={!selectedOverlay.style.canDecreaseFontSize}
+            title="Decrease font size"
+            onclick={() => controller.decreaseSelectedFontSize()}
+          >
+            A-
+          </button>
+          <span class="font-size-value">{selectedOverlay.style.fontSize}</span>
+          <button
+            type="button"
+            disabled={!selectedOverlay.style.canIncreaseFontSize}
+            title="Increase font size"
+            onclick={() => controller.increaseSelectedFontSize()}
+          >
+            A+
+          </button>
+        </div>
+      {/if}
+
       {#if selectedOverlay.style.textAlign}
         <div class="mini-group">
           {#each textAlignOptions as option}
@@ -258,6 +287,7 @@
             <button
               type="button"
               class="swatch"
+              class:transparent-swatch={color === "transparent"}
               class:active={selectedOverlay.style.borderColor === color}
               style:background={color}
               title={`Border ${color}`}
@@ -273,6 +303,7 @@
             <button
               type="button"
               class="swatch"
+              class:transparent-swatch={color === "transparent"}
               class:active={selectedOverlay.style.fillColor === color}
               style:background={color}
               title={`Background ${color}`}
@@ -336,6 +367,22 @@
     cursor: pointer;
   }
 
+  .mini-group button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .font-size-group {
+    gap: 4px;
+  }
+
+  .font-size-value {
+    min-width: 28px;
+    text-align: center;
+    font-size: 12px;
+    color: #374151;
+  }
+
   .mini-group button.active {
     outline: 2px solid #2563eb;
     outline-offset: 1px;
@@ -346,5 +393,31 @@
     min-width: 22px;
     height: 22px;
     padding: 0;
+  }
+
+  .transparent-swatch {
+    position: relative;
+    background-image: linear-gradient(45deg, #e5e7eb 25%, transparent 25%),
+      linear-gradient(-45deg, #e5e7eb 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #e5e7eb 75%),
+      linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
+    background-size: 10px 10px;
+    background-position:
+      0 0,
+      0 5px,
+      5px -5px,
+      -5px 0;
+  }
+
+  .transparent-swatch::after {
+    content: "";
+    position: absolute;
+    left: 3px;
+    top: 10px;
+    width: 14px;
+    height: 2px;
+    background: #ef4444;
+    transform: rotate(-35deg);
+    border-radius: 999px;
   }
 </style>
