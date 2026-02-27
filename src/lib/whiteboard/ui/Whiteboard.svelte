@@ -1,0 +1,277 @@
+<script lang="ts">
+  import { get } from "svelte/store";
+  import { onMount } from "svelte";
+  import { BoardController } from "../application/BoardController";
+  import { SerializationService } from "../application/SerializationService";
+  import type { CanvasElementJSON, Point, TextAlign } from "../domain/types";
+  import { board, selectedElementIds, viewport } from "../stores";
+  import CanvasRenderer from "./CanvasRenderer.svelte";
+  import Toolbar, { type CreateKind } from "./Toolbar.svelte";
+
+  const controller = new BoardController(board, viewport, selectedElementIds);
+
+  let cursorWorld: Point = { x: 0, y: 0 };
+  let copiedSnapshots: CanvasElementJSON[] = [];
+  let selectedOverlay:
+    | {
+        x: number;
+        y: number;
+        style: NonNullable<ReturnType<BoardController["getSelectedStyleState"]>>;
+      }
+    | null = null;
+  const fillSwatches = [
+    "#ffffff",
+    "#fef08a",
+    "#dbeafe",
+    "#dcfce7",
+    "#fee2e2",
+    "#f5f3ff",
+  ];
+  const borderSwatches = [
+    "#111827",
+    "#374151",
+    "#2563eb",
+    "#16a34a",
+    "#ca8a04",
+    "#dc2626",
+  ];
+
+  const textAlignOptions: { label: string; value: TextAlign }[] = [
+    { label: "L", value: "left" },
+    { label: "C", value: "center" },
+    { label: "R", value: "right" },
+  ];
+
+  function handleCursorWorldChange(point: Point) {
+    cursorWorld = point;
+  }
+
+  function handleCreate(kind: CreateKind) {
+    controller.createElement(kind, cursorWorld);
+  }
+
+  function handleDelete() {
+    controller.deleteSelection();
+  }
+
+  function handleExport() {
+    const boardState = get(board);
+    const payload = SerializationService.exportBoard(boardState);
+    const blob = new Blob([payload], { type: "application/json" });
+    const href = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = href;
+    link.download = `whiteboard-${new Date().toISOString().slice(0, 19).replace(/:/g, "-")}.json`;
+    link.click();
+    URL.revokeObjectURL(href);
+  }
+
+  async function handleImport(event: Event) {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    const payload = await file.text();
+    const imported = SerializationService.importBoard(payload);
+    board.set(imported);
+    selectedElementIds.set(new Set());
+    input.value = "";
+  }
+
+  function handleKeydown(event: KeyboardEvent) {
+    const isCopy =
+      event.ctrlKey && !event.shiftKey && event.key.toLowerCase() === "c";
+    const isPaste =
+      event.ctrlKey && !event.shiftKey && event.key.toLowerCase() === "v";
+    const isDelete = event.key === "Delete";
+
+    if (isCopy) {
+      copiedSnapshots = controller.copySelectionSnapshots();
+      if (copiedSnapshots.length > 0) {
+        event.preventDefault();
+      }
+    }
+
+    if (isPaste && copiedSnapshots.length > 0) {
+      event.preventDefault();
+      controller.pasteSnapshotsAt(copiedSnapshots, cursorWorld);
+    }
+
+    if (isDelete) {
+      const hasSelection = get(selectedElementIds).size > 0;
+      if (hasSelection) {
+        event.preventDefault();
+        controller.deleteSelection();
+      }
+    }
+  }
+
+  onMount(() => {
+    window.addEventListener("keydown", handleKeydown);
+    return () => window.removeEventListener("keydown", handleKeydown);
+  });
+
+  function getSelectedOverlayState() {
+    const element = controller.getSingleSelectedElement();
+    if (!element) {
+      return null;
+    }
+
+    const style = controller.getSelectedStyleState();
+    if (!style) {
+      return null;
+    }
+
+    const dpr = window.devicePixelRatio || 1;
+    const centerX =
+      ((element.x + element.width / 2 + $viewport.offsetX) * $viewport.zoom) /
+      dpr;
+    const topY = ((element.y + $viewport.offsetY) * $viewport.zoom) / dpr;
+
+    return {
+      x: centerX,
+      y: Math.max(10, topY - 56),
+      style,
+    };
+  }
+
+  $: {
+    $board;
+    selectedOverlay = getSelectedOverlayState();
+  }
+</script>
+
+<section class="whiteboard-shell">
+  <Toolbar
+    onCreate={handleCreate}
+    onDelete={handleDelete}
+    onExport={handleExport}
+    onImport={handleImport}
+  />
+  <div class="board-area">
+    <CanvasRenderer
+      board={$board}
+      viewport={$viewport}
+      {controller}
+      onCursorWorldChange={handleCursorWorldChange}
+    />
+  </div>
+
+  {#if selectedOverlay}
+    <div
+      class="selected-toolbar"
+      style:left={`${selectedOverlay.x}px`}
+      style:top={`${selectedOverlay.y}px`}
+    >
+      {#if selectedOverlay.style.textAlign}
+        <div class="mini-group">
+          {#each textAlignOptions as option}
+            <button
+              type="button"
+              class:active={selectedOverlay.style.textAlign === option.value}
+              onclick={() => controller.setSelectedTextAlign(option.value)}
+            >
+              {option.label}
+            </button>
+          {/each}
+        </div>
+      {/if}
+
+      {#if selectedOverlay.style.borderColor}
+        <div class="mini-group">
+          {#each borderSwatches as color}
+            <button
+              type="button"
+              class="swatch"
+              class:active={selectedOverlay.style.borderColor === color}
+              style:background={color}
+              title={`Border ${color}`}
+              onclick={() => controller.setSelectedBorderColor(color)}
+            ></button>
+          {/each}
+        </div>
+      {/if}
+
+      {#if selectedOverlay.style.fillColor}
+        <div class="mini-group">
+          {#each fillSwatches as color}
+            <button
+              type="button"
+              class="swatch"
+              class:active={selectedOverlay.style.fillColor === color}
+              style:background={color}
+              title={`Background ${color}`}
+              onclick={() => controller.setSelectedFillColor(color)}
+            ></button>
+          {/each}
+        </div>
+      {/if}
+    </div>
+  {/if}
+</section>
+
+<style>
+  .whiteboard-shell {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: #f8fafc;
+  }
+
+  .board-area {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .selected-toolbar {
+    position: absolute;
+    transform: translateX(-50%);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .mini-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-right: 6px;
+    border-right: 1px solid #e5e7eb;
+  }
+
+  .mini-group:last-child {
+    border-right: none;
+    padding-right: 0;
+  }
+
+  .mini-group button {
+    border: 1px solid #d1d5db;
+    background: #f9fafb;
+    border-radius: 6px;
+    min-width: 24px;
+    height: 24px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  .mini-group button.active {
+    outline: 2px solid #2563eb;
+    outline-offset: 1px;
+  }
+
+  .swatch {
+    width: 22px;
+    min-width: 22px;
+    height: 22px;
+    padding: 0;
+  }
+</style>
