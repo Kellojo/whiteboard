@@ -1,4 +1,15 @@
 <script lang="ts">
+  import Icon from "@iconify/svelte";
+  import squareIcon from "@iconify-icons/lucide/square";
+  import circleIcon from "@iconify-icons/lucide/circle";
+  import typeIcon from "@iconify-icons/lucide/type";
+  import stickyIcon from "@iconify-icons/lucide/sticky-note";
+  import backIcon from "@iconify-icons/lucide/arrow-left";
+  import sunIcon from "@iconify-icons/lucide/sun";
+  import moonIcon from "@iconify-icons/lucide/moon";
+  import importIcon from "@iconify-icons/lucide/upload";
+  import exportIcon from "@iconify-icons/lucide/download";
+
   export type CreateKind = "rectangle" | "ellipse" | "text" | "sticky";
 
   let {
@@ -19,33 +30,71 @@
     onToggleTheme: () => void;
   } = $props();
 
-  const createButtons: { label: string; kind: CreateKind }[] = [
-    { label: "Rectangle", kind: "rectangle" },
-    { label: "Ellipse", kind: "ellipse" },
-    { label: "Text", kind: "text" },
-    { label: "Sticky", kind: "sticky" },
-  ];
+  const createButtons = [
+    { label: "Rectangle", icon: squareIcon, kind: "rectangle" },
+    { label: "Ellipse", icon: circleIcon, kind: "ellipse" },
+    { label: "Text", icon: typeIcon, kind: "text" },
+    { label: "Sticky", icon: stickyIcon, kind: "sticky" },
+  ] satisfies { label: string; icon: object; kind: CreateKind }[];
 </script>
 
 <div class="toolbar">
   <div class="actions">
     {#if onBack}
-      <button type="button" onclick={onBack}>← Back</button>
+      <button
+        type="button"
+        class="action-icon"
+        aria-label="Back"
+        title="Back"
+        onclick={onBack}
+      >
+        <Icon icon={backIcon} width="18" height="18" />
+      </button>
     {/if}
-    <button type="button" onclick={onToggleTheme}
-      >{themeMode === "dark" ? "Light mode" : "Dark mode"}</button
+    <button
+      type="button"
+      class="action-icon"
+      aria-label={themeMode === "dark"
+        ? "Switch to light mode"
+        : "Switch to dark mode"}
+      title={themeMode === "dark" ? "Light mode" : "Dark mode"}
+      onclick={onToggleTheme}
     >
-    <button type="button" onclick={onExport}>Export JSON</button>
-    <label class="import-button">
-      Import JSON
+      <Icon
+        icon={themeMode === "dark" ? sunIcon : moonIcon}
+        width="18"
+        height="18"
+      />
+    </button>
+    <button
+      type="button"
+      class="action-icon"
+      aria-label="Export JSON"
+      title="Export JSON"
+      onclick={onExport}
+    >
+      <Icon icon={exportIcon} width="18" height="18" />
+    </button>
+    <label
+      class="import-button action-icon"
+      aria-label="Import JSON"
+      title="Import JSON"
+    >
+      <Icon icon={importIcon} width="18" height="18" />
       <input type="file" accept="application/json" onchange={onImport} />
     </label>
   </div>
   <div class="tools">
     {#each createButtons as button}
-      <button type="button" onclick={() => onCreate(button.kind)}
-        >{button.label}</button
+      <button
+        type="button"
+        class="tool-button"
+        aria-label={button.label}
+        title={button.label}
+        onclick={() => onCreate(button.kind)}
       >
+        <Icon icon={button.icon} width="22" height="22" />
+      </button>
     {/each}
   </div>
 </div>
@@ -117,16 +166,34 @@
     display: none;
   }
 
+  .tool-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+  }
+
+  .action-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+  }
+
   .hint {
     user-select: none;
     position: fixed;
     left: 50%;
-    bottom: 88px;
+    bottom: 100px;
     transform: translateX(-50%);
     z-index: 20;
     margin: 0;
     padding: 4px 10px;
-    font-size: 12px;
+    font-size: 0.875rem;
     color: var(--app-text-muted);
     background: var(--surface-1);
     border: 1px solid var(--border-1);

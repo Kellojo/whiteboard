@@ -1,4 +1,10 @@
 <script lang="ts">
+  import Icon from "@iconify/svelte";
+  import minusIcon from "@iconify-icons/lucide/minus";
+  import plusIcon from "@iconify-icons/lucide/plus";
+  import alignLeftIcon from "@iconify-icons/lucide/align-left";
+  import alignCenterIcon from "@iconify-icons/lucide/align-center";
+  import alignRightIcon from "@iconify-icons/lucide/align-right";
   import { get } from "svelte/store";
   import { onMount, tick } from "svelte";
   import type { BoardJSON } from "../domain/Board";
@@ -78,11 +84,11 @@
     "#dc2626",
   ];
 
-  const textAlignOptions: { label: string; value: TextAlign }[] = [
-    { label: "L", value: "left" },
-    { label: "C", value: "center" },
-    { label: "R", value: "right" },
-  ];
+  const textAlignOptions = [
+    { label: "Align left", icon: alignLeftIcon, value: "left" },
+    { label: "Align center", icon: alignCenterIcon, value: "center" },
+    { label: "Align right", icon: alignRightIcon, value: "right" },
+  ] satisfies { label: string; icon: object; value: TextAlign }[];
   const inlineEditorFontCalibration = 0.98;
 
   function handleCursorWorldChange(point: Point) {
@@ -99,7 +105,43 @@
     setTheme(themeMode === "dark" ? "light" : "dark");
   }
 
-  function handleBack() {
+  function getCurrentPayloadText(): string {
+    return SerializationService.exportBoard(get(board), {
+      viewport: get(viewport),
+    });
+  }
+
+  async function persistBoardIfChanged(): Promise<void> {
+    if (!boardId || !hasLoadedRemoteBoard) {
+      return;
+    }
+
+    const payloadText = getCurrentPayloadText();
+    if (payloadText === lastSavedSignature) {
+      return;
+    }
+
+    const payload = JSON.parse(payloadText) as BoardJSON;
+    const response = await fetch(`/api/boards/${boardId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ payload }),
+    });
+
+    if (response.ok) {
+      lastSavedSignature = payloadText;
+    }
+  }
+
+  async function handleBack() {
+    try {
+      if (textEditor) {
+        commitTextEditor();
+      }
+      await persistBoardIfChanged();
+    } catch (error) {
+      console.error(error);
+    }
     window.location.assign("/");
   }
 
@@ -140,25 +182,8 @@
 
     autosaveTimer = setTimeout(async () => {
       autosaveTimer = null;
-      const payloadText = SerializationService.exportBoard(get(board), {
-        viewport: get(viewport),
-      });
-
-      if (payloadText === lastSavedSignature) {
-        return;
-      }
-
       try {
-        const payload = JSON.parse(payloadText) as BoardJSON;
-        const response = await fetch(`/api/boards/${boardId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ payload }),
-        });
-
-        if (response.ok) {
-          lastSavedSignature = payloadText;
-        }
+        await persistBoardIfChanged();
       } catch (error) {
         console.error(error);
       }
@@ -166,7 +191,13 @@
   }
 
   function handleCreate(kind: CreateKind) {
-    controller.createElement(kind, cursorWorld);
+    const currentViewport = get(viewport);
+    const centerWorld = {
+      x: window.innerWidth / 2 / currentViewport.zoom - currentViewport.offsetX,
+      y:
+        window.innerHeight / 2 / currentViewport.zoom - currentViewport.offsetY,
+    };
+    controller.createElement(kind, centerWorld);
   }
 
   function handleDelete() {
@@ -230,6 +261,17 @@
   }
 
   onMount(() => {
+    const unsubscribeBoard = board.subscribe(() => {
+      if (hasLoadedRemoteBoard) {
+        queueAutosave();
+      }
+    });
+    const unsubscribeViewport = viewport.subscribe(() => {
+      if (hasLoadedRemoteBoard) {
+        queueAutosave();
+      }
+    });
+
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
     if (stored === "light" || stored === "dark") {
       setTheme(stored);
@@ -248,23 +290,26 @@
     }
 
     return () => {
+      unsubscribeBoard();
+      unsubscribeViewport();
       if (autosaveTimer) {
         clearTimeout(autosaveTimer);
+        autosaveTimer = null;
       }
+      if (textEditor) {
+        commitTextEditor();
+      }
+      void persistBoardIfChanged();
       window.removeEventListener("keydown", handleKeydown);
       window.removeEventListener("paste", handlePaste);
     };
   });
 
-  $effect(() => {
-    $board;
-    $viewport;
-    if (hasLoadedRemoteBoard) {
-      queueAutosave();
-    }
-  });
-
   async function handlePaste(event: ClipboardEvent) {
+    if (textEditor) {
+      return;
+    }
+
     const files = extractImageFilesFromClipboard(event);
     if (files.length > 0) {
       event.preventDefault();
@@ -275,6 +320,13 @@
     if (copiedSnapshots.length > 0) {
       event.preventDefault();
       controller.pasteSnapshotsAt(copiedSnapshots, cursorWorld);
+      return;
+    }
+
+    const plainText = event.clipboardData?.getData("text/plain") ?? "";
+    if (plainText.trim().length > 0) {
+      event.preventDefault();
+      controller.addTextElement(plainText, cursorWorld);
     }
   }
 
@@ -533,7 +585,7 @@
             title="Decrease font size"
             onclick={() => controller.decreaseSelectedFontSize()}
           >
-            A-
+            <Icon icon={minusIcon} width="14" height="14" />
           </button>
           <span class="font-size-value">{selectedOverlay.style.fontSize}</span>
           <button
@@ -542,7 +594,7 @@
             title="Increase font size"
             onclick={() => controller.increaseSelectedFontSize()}
           >
-            A+
+            <Icon icon={plusIcon} width="14" height="14" />
           </button>
         </div>
       {/if}
@@ -552,10 +604,11 @@
           {#each textAlignOptions as option}
             <button
               type="button"
+              title={option.label}
               class:active={selectedOverlay.style.textAlign === option.value}
               onclick={() => controller.setSelectedTextAlign(option.value)}
             >
-              {option.label}
+              <Icon icon={option.icon} width="14" height="14" />
             </button>
           {/each}
         </div>
@@ -638,7 +691,7 @@
     color: var(--app-text);
     border-radius: 10px;
     padding: 6px 12px;
-    font-size: 13px;
+    font-size: 1rem;
     font-weight: 600;
     box-shadow: var(--shadow-s);
   }

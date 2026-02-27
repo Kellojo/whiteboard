@@ -1,4 +1,7 @@
 <script lang="ts">
+  import Icon from "@iconify/svelte";
+  import plusIcon from "@iconify-icons/lucide/plus";
+  import trashIcon from "@iconify-icons/lucide/trash-2";
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
 
@@ -7,6 +10,8 @@
     name: string;
     createdAt: string;
     updatedAt: string;
+    elementCount: number;
+    fileSizeBytes: number;
   }
 
   let boards: BoardMeta[] = [];
@@ -94,6 +99,16 @@
     return new Date(isoDate).toLocaleString();
   }
 
+  function formatFileSize(sizeBytes: number): string {
+    const mb = sizeBytes / (1024 * 1024);
+    if (mb >= 1) {
+      return `${mb.toFixed(2)} MB`;
+    }
+
+    const kb = sizeBytes / 1024;
+    return `${Math.max(0.1, kb).toFixed(1)} KB`;
+  }
+
   onMount(() => {
     void loadBoards();
   });
@@ -121,6 +136,7 @@
       disabled={isCreating}
       onclick={() => void createBoard()}
     >
+      <Icon icon={plusIcon} width="16" height="16" />
       {isCreating ? "Creating..." : "Create board"}
     </button>
   </section>
@@ -136,7 +152,10 @@
           <a class="board-link" href={`/whiteboard/${boardMeta.id}`}>
             <div class="board-name">{boardMeta.name}</div>
             <div class="board-date">
-              Updated {formatUpdatedDate(boardMeta.updatedAt)}
+              {boardMeta.elementCount}
+              {boardMeta.elementCount === 1 ? "item" : "items"} • {formatFileSize(
+                boardMeta.fileSizeBytes,
+              )} • Updated {formatUpdatedDate(boardMeta.updatedAt)}
             </div>
           </a>
           <button
@@ -145,6 +164,7 @@
             disabled={deletingBoardId === boardMeta.id}
             onclick={() => void deleteBoardById(boardMeta)}
           >
+            <Icon icon={trashIcon} width="15" height="15" />
             {deletingBoardId === boardMeta.id ? "Deleting..." : "Delete"}
           </button>
         </div>
@@ -192,6 +212,9 @@
   }
 
   .create-row button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     border: 1px solid var(--border-1);
     border-radius: 10px;
     background: var(--button-bg);
@@ -235,6 +258,9 @@
   }
 
   .delete-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     margin-right: 10px;
     border: 1px solid var(--border-1);
     border-radius: 8px;

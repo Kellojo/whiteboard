@@ -371,6 +371,32 @@ export class BoardController {
     });
   }
 
+  addTextElement(text: string, position: Point): void {
+    const normalizedText = text.replace(/\r\n/g, "\n").trim();
+    if (!normalizedText) {
+      return;
+    }
+
+    const lines = normalizedText.split("\n");
+    const maxLineLength = Math.max(1, ...lines.map((line) => line.length));
+    const width = Math.min(420, Math.max(140, maxLineLength * 9 + 24));
+    const height = Math.min(320, Math.max(44, lines.length * 26 + 18));
+
+    this.boardStore.update((board) => {
+      board.addElement(
+        new TextElement({
+          id: crypto.randomUUID(),
+          x: position.x - width / 2,
+          y: position.y - height / 2,
+          width,
+          height,
+          text: normalizedText,
+        }),
+      );
+      return board;
+    });
+  }
+
   copySelectionSnapshots(): CanvasElementJSON[] {
     return get(this.boardStore)
       .getSelectedElements()

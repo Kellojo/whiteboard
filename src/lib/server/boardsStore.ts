@@ -14,9 +14,15 @@ export interface StoredBoardMeta {
   name: string;
   createdAt: string;
   updatedAt: string;
+  elementCount: number;
+  fileSizeBytes: number;
 }
 
-export interface StoredBoard extends StoredBoardMeta {
+export interface StoredBoard {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
   payload: BoardJSON;
 }
 
@@ -56,12 +62,14 @@ function sanitizeName(input: string | undefined): string {
   return candidate.length > 0 ? candidate.slice(0, 80) : "Untitled board";
 }
 
-function toMeta(board: StoredBoard): StoredBoardMeta {
+function toMeta(board: StoredBoard, fileSizeBytes: number): StoredBoardMeta {
   return {
     id: board.id,
     name: board.name,
     createdAt: board.createdAt,
     updatedAt: board.updatedAt,
+    elementCount: board.payload.elements.length,
+    fileSizeBytes,
   };
 }
 
@@ -115,7 +123,8 @@ export async function listBoards(): Promise<StoredBoardMeta[]> {
     try {
       const board = await readBoardById(id);
       if (board) {
-        metas.push(toMeta(board));
+        const details = await stat(boardFilePath(id));
+        metas.push(toMeta(board, details.size));
       }
     } catch {
       continue;
