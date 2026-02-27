@@ -6,6 +6,7 @@ export { Board } from "./whiteboard/domain/Board";
 export { CanvasElement } from "./whiteboard/domain/CanvasElement";
 export { RectangleElement } from "./whiteboard/domain/RectangleElement";
 export { EllipseElement } from "./whiteboard/domain/EllipseElement";
+export { ImageElement } from "./whiteboard/domain/ImageElement";
 export { TextElement } from "./whiteboard/domain/TextElement";
 export { StickyNoteElement } from "./whiteboard/domain/StickyNoteElement";
 export { elementFromJSON } from "./whiteboard/domain/elementFactory";

@@ -12,13 +12,11 @@
 
   let cursorWorld: Point = { x: 0, y: 0 };
   let copiedSnapshots: CanvasElementJSON[] = [];
-  let selectedOverlay:
-    | {
-        x: number;
-        y: number;
-        style: NonNullable<ReturnType<BoardController["getSelectedStyleState"]>>;
-      }
-    | null = null;
+  let selectedOverlay: {
+    x: number;
+    y: number;
+    style: NonNullable<ReturnType<BoardController["getSelectedStyleState"]>>;
+  } | null = null;
   const fillSwatches = [
     "#ffffff",
     "#fef08a",
@@ -83,8 +81,6 @@
   function handleKeydown(event: KeyboardEvent) {
     const isCopy =
       event.ctrlKey && !event.shiftKey && event.key.toLowerCase() === "c";
-    const isPaste =
-      event.ctrlKey && !event.shiftKey && event.key.toLowerCase() === "v";
     const isDelete = event.key === "Delete";
 
     if (isCopy) {
@@ -92,11 +88,6 @@
       if (copiedSnapshots.length > 0) {
         event.preventDefault();
       }
-    }
-
-    if (isPaste && copiedSnapshots.length > 0) {
-      event.preventDefault();
-      controller.pasteSnapshotsAt(copiedSnapshots, cursorWorld);
     }
 
     if (isDelete) {
@@ -110,8 +101,78 @@
 
   onMount(() => {
     window.addEventListener("keydown", handleKeydown);
-    return () => window.removeEventListener("keydown", handleKeydown);
+    window.addEventListener("paste", handlePaste);
+    return () => {
+      window.removeEventListener("keydown", handleKeydown);
+      window.removeEventListener("paste", handlePaste);
+    };
   });
+
+  async function handlePaste(event: ClipboardEvent) {
+    const files = extractImageFilesFromClipboard(event);
+    if (files.length > 0) {
+      event.preventDefault();
+      await addImageFilesAt(files, cursorWorld);
+      return;
+    }
+
+    if (copiedSnapshots.length > 0) {
+      event.preventDefault();
+      controller.pasteSnapshotsAt(copiedSnapshots, cursorWorld);
+    }
+  }
+
+  async function handleImageDrop(files: File[], worldPoint: Point) {
+    await addImageFilesAt(files, worldPoint);
+  }
+
+  async function addImageFilesAt(files: File[], worldPoint: Point) {
+    for (const file of files) {
+      const imageDataUrl = await fileToDataUrl(file);
+      const naturalSize = await readImageSize(imageDataUrl);
+      controller.addImageElement(imageDataUrl, worldPoint, naturalSize);
+    }
+  }
+
+  function extractImageFilesFromClipboard(event: ClipboardEvent): File[] {
+    const items = event.clipboardData?.items;
+    if (!items) {
+      return [];
+    }
+
+    const files: File[] = [];
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          files.push(file);
+        }
+      }
+    }
+    return files;
+  }
+
+  function fileToDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error("Failed to read image file"));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function readImageSize(
+    dataUrl: string,
+  ): Promise<{ width: number; height: number }> {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => {
+        resolve({ width: image.naturalWidth, height: image.naturalHeight });
+      };
+      image.onerror = () => reject(new Error("Failed to decode image"));
+      image.src = dataUrl;
+    });
+  }
 
   function getSelectedOverlayState() {
     const element = controller.getSingleSelectedElement();
@@ -121,6 +182,10 @@
 
     const style = controller.getSelectedStyleState();
     if (!style) {
+      return null;
+    }
+
+    if (!style.fillColor && !style.borderColor && !style.textAlign) {
       return null;
     }
 
@@ -139,6 +204,8 @@
 
   $: {
     $board;
+    $viewport;
+    $selectedElementIds;
     selectedOverlay = getSelectedOverlayState();
   }
 </script>
@@ -156,6 +223,7 @@
       viewport={$viewport}
       {controller}
       onCursorWorldChange={handleCursorWorldChange}
+      onImageDrop={handleImageDrop}
     />
   </div>
 

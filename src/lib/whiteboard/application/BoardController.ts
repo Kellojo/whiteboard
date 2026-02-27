@@ -3,6 +3,7 @@ import { Board } from "../domain/Board";
 import type { CanvasElement } from "../domain/CanvasElement";
 import { elementFromJSON } from "../domain/elementFactory";
 import { EllipseElement } from "../domain/EllipseElement";
+import { ImageElement } from "../domain/ImageElement";
 import { RectangleElement } from "../domain/RectangleElement";
 import { StickyNoteElement } from "../domain/StickyNoteElement";
 import { TextElement } from "../domain/TextElement";
@@ -312,6 +313,38 @@ export class BoardController {
         );
       }
 
+      return board;
+    });
+  }
+
+  addImageElement(
+    imageDataUrl: string,
+    position: Point,
+    naturalSize?: { width: number; height: number },
+  ): void {
+    const naturalWidth = naturalSize?.width ?? 320;
+    const naturalHeight = naturalSize?.height ?? 240;
+    const maxWidth = 360;
+    const maxHeight = 280;
+    const scale = Math.min(
+      1,
+      maxWidth / Math.max(1, naturalWidth),
+      maxHeight / Math.max(1, naturalHeight),
+    );
+    const width = Math.max(40, naturalWidth * scale);
+    const height = Math.max(40, naturalHeight * scale);
+
+    this.boardStore.update((board) => {
+      board.addElement(
+        new ImageElement({
+          id: crypto.randomUUID(),
+          x: position.x - width / 2,
+          y: position.y - height / 2,
+          width,
+          height,
+          imageDataUrl,
+        }),
+      );
       return board;
     });
   }

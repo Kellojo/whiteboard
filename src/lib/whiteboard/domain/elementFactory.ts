@@ -1,5 +1,6 @@
 import type { CanvasElement } from "./CanvasElement";
 import { EllipseElement } from "./EllipseElement";
+import { ImageElement } from "./ImageElement";
 import { RectangleElement } from "./RectangleElement";
 import { StickyNoteElement } from "./StickyNoteElement";
 import { TextElement } from "./TextElement";
@@ -15,6 +16,8 @@ export function elementFromJSON(json: CanvasElementJSON): CanvasElement {
       return TextElement.fromJSON(json);
     case "sticky":
       return StickyNoteElement.fromJSON(json);
+    case "image":
+      return ImageElement.fromJSON(json);
     default:
       throw new Error(`Unknown element type: ${json.type}`);
   }

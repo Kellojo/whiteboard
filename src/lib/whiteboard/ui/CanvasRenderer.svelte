@@ -10,11 +10,13 @@
     viewport,
     controller,
     onCursorWorldChange,
+    onImageDrop,
   }: {
     board: Board;
     viewport: ViewportState;
     controller: BoardController;
     onCursorWorldChange: (point: Point) => void;
+    onImageDrop: (files: File[], worldPoint: Point) => void;
   } = $props();
 
   let canvas: HTMLCanvasElement;
@@ -204,6 +206,32 @@
   function handleContextMenu(event: MouseEvent) {
     event.preventDefault();
   }
+
+  function handleDragOver(event: DragEvent) {
+    event.preventDefault();
+  }
+
+  function handleDrop(event: DragEvent) {
+    event.preventDefault();
+    if (!event.dataTransfer) {
+      return;
+    }
+
+    const files = Array.from(event.dataTransfer.files).filter((file) =>
+      file.type.startsWith("image/"),
+    );
+    if (!files.length) {
+      return;
+    }
+
+    const point = screenPoint({
+      clientX: event.clientX,
+      clientY: event.clientY,
+    });
+    const worldPoint = controller.toWorld(point);
+    onCursorWorldChange(worldPoint);
+    onImageDrop(files, worldPoint);
+  }
 </script>
 
 <div class="canvas-host">
@@ -216,6 +244,8 @@
     onpointercancel={handlePointerUp}
     onwheel={handleWheel}
     oncontextmenu={handleContextMenu}
+    ondragover={handleDragOver}
+    ondrop={handleDrop}
   ></canvas>
 </div>
 

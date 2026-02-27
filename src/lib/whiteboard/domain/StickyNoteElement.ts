@@ -45,12 +45,7 @@ export class StickyNoteElement extends CanvasElement {
         : this.textAlign === "center"
           ? this.x + this.width / 2
           : this.x + this.width - 8;
-    ctx.fillText(
-      this.text,
-      textX,
-      this.y + 8,
-      Math.max(0, this.width - 16),
-    );
+    ctx.fillText(this.text, textX, this.y + 8, Math.max(0, this.width - 16));
     ctx.restore();
   }
 
