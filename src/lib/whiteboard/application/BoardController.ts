@@ -45,6 +45,21 @@ export interface SelectedStyleState {
   canIncreaseFontSize: boolean;
 }
 
+export interface EditableTextTarget {
+  id: string;
+  text: string;
+  kind: "text" | "sticky";
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  fontSize: number;
+  fillColor: string;
+  borderColor: string;
+  textColor: string;
+  textAlign: TextAlign;
+}
+
 export class BoardController {
   private mode: InteractionMode = "idle";
   private dragStartWorld: Point | null = null;
@@ -360,6 +375,51 @@ export class BoardController {
     return get(this.boardStore)
       .getSelectedElements()
       .map((element) => ({ ...element.toJSON(), isSelected: false }));
+  }
+
+  getEditableTextTargetAt(point: Point): EditableTextTarget | null {
+    const hit = get(this.boardStore).hitTest(point);
+    if (!(hit instanceof TextElement) && !(hit instanceof StickyNoteElement)) {
+      return null;
+    }
+
+    return {
+      id: hit.id,
+      text: hit.text,
+      kind: hit instanceof StickyNoteElement ? "sticky" : "text",
+      x: hit.x,
+      y: hit.y,
+      width: hit.width,
+      height: hit.height,
+      fontSize: hit.fontSize,
+      fillColor: hit.fillColor,
+      borderColor: hit.borderColor,
+      textColor: hit instanceof StickyNoteElement ? "#1f2937" : "#111827",
+      textAlign: hit.textAlign,
+    };
+  }
+
+  getElementById(id: string): CanvasElement | null {
+    return (
+      get(this.boardStore)
+        .getAllElements()
+        .find((element) => element.id === id) ?? null
+    );
+  }
+
+  updateElementText(id: string, text: string): void {
+    this.boardStore.update((board) => {
+      const target = board
+        .getAllElements()
+        .find((element) => element.id === id);
+      if (!target) {
+        return board;
+      }
+      if ("text" in target) {
+        target.text = text;
+      }
+      return board;
+    });
   }
 
   getSingleSelectedElement(): CanvasElement | null {

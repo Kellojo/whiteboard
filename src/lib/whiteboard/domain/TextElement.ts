@@ -43,7 +43,12 @@ export class TextElement extends CanvasElement {
         : this.textAlign === "center"
           ? this.x + this.width / 2
           : this.x + this.width - 8;
-    ctx.fillText(this.text, textX, this.y + 6, Math.max(0, this.width - 16));
+    const maxLineWidth = Math.max(0, this.width - 16);
+    const lines = wrapLines(ctx, this.text, maxLineWidth);
+    const lineHeight = Math.max(12, this.fontSize * 1.3);
+    for (let i = 0; i < lines.length; i++) {
+      ctx.fillText(lines[i], textX, this.y + 6 + i * lineHeight, maxLineWidth);
+    }
     if (this.isSelected) {
       ctx.strokeStyle = "#2563eb";
       ctx.lineWidth = 2;
@@ -82,4 +87,43 @@ export class TextElement extends CanvasElement {
   static fromJSON(json: CanvasElementJSON): TextElement {
     return new TextElement(json);
   }
+}
+
+function wrapLines(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+): string[] {
+  if (maxWidth <= 0) {
+    return [""];
+  }
+
+  const result: string[] = [];
+  const paragraphs = text.split("\n");
+
+  for (const paragraph of paragraphs) {
+    if (paragraph.length === 0) {
+      result.push("");
+      continue;
+    }
+
+    const words = paragraph.split(" ");
+    let line = "";
+
+    for (const word of words) {
+      const candidate = line ? `${line} ${word}` : word;
+      if (ctx.measureText(candidate).width <= maxWidth) {
+        line = candidate;
+      } else {
+        if (line) {
+          result.push(line);
+        }
+        line = word;
+      }
+    }
+
+    result.push(line);
+  }
+
+  return result.length > 0 ? result : [""];
 }

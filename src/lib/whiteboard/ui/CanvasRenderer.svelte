@@ -11,16 +11,20 @@
     controller,
     onCursorWorldChange,
     onImageDrop,
+    onDoubleClick,
   }: {
     board: Board;
     viewport: ViewportState;
     controller: BoardController;
     onCursorWorldChange: (point: Point) => void;
     onImageDrop: (files: File[], worldPoint: Point) => void;
+    onDoubleClick: (worldPoint: Point) => void;
   } = $props();
 
   let canvas: HTMLCanvasElement;
   let isPointerDown = false;
+  let lastClickTimestamp = 0;
+  let lastClickPoint: Point | null = null;
 
   const selectionStroke = "#2563eb";
   const previewStroke = "#16a34a";
@@ -170,10 +174,36 @@
   }
 
   function handlePointerDown(event: PointerEvent) {
+    const point = screenPoint(event);
+    const worldPoint = controller.toWorld(point);
+    onCursorWorldChange(worldPoint);
+
+    const now = Date.now();
+    const withinTime = now - lastClickTimestamp <= 450;
+    const withinDistance =
+      lastClickPoint !== null &&
+      Math.hypot(point.x - lastClickPoint.x, point.y - lastClickPoint.y) <= 28;
+
+    const nativeDoubleClick = event.detail >= 2;
+
+    if (nativeDoubleClick || (withinTime && withinDistance)) {
+      console.log("[CanvasRenderer] double-click detected", {
+        nativeDoubleClick,
+        withinTime,
+        withinDistance,
+        worldPoint,
+      });
+      onDoubleClick(worldPoint);
+      lastClickTimestamp = 0;
+      lastClickPoint = null;
+      return;
+    }
+
+    lastClickTimestamp = now;
+    lastClickPoint = point;
+
     isPointerDown = true;
     canvas.setPointerCapture(event.pointerId);
-    const point = screenPoint(event);
-    onCursorWorldChange(controller.toWorld(point));
     controller.onPointerDown(point, {
       additiveSelection: event.shiftKey,
       isPanGesture: event.altKey || event.button === 1,
@@ -232,6 +262,17 @@
     onCursorWorldChange(worldPoint);
     onImageDrop(files, worldPoint);
   }
+
+  function handleNativeDoubleClick(event: MouseEvent) {
+    const point = screenPoint({
+      clientX: event.clientX,
+      clientY: event.clientY,
+    });
+    const worldPoint = controller.toWorld(point);
+    console.log("[CanvasRenderer] native dblclick event", { worldPoint });
+    onCursorWorldChange(worldPoint);
+    onDoubleClick(worldPoint);
+  }
 </script>
 
 <div class="canvas-host">
@@ -246,6 +287,7 @@
     oncontextmenu={handleContextMenu}
     ondragover={handleDragOver}
     ondrop={handleDrop}
+    ondblclick={handleNativeDoubleClick}
   ></canvas>
 </div>
 

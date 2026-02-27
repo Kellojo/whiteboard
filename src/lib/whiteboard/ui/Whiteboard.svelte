@@ -1,6 +1,6 @@
 <script lang="ts">
   import { get } from "svelte/store";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { BoardController } from "../application/BoardController";
   import { SerializationService } from "../application/SerializationService";
   import type { CanvasElementJSON, Point, TextAlign } from "../domain/types";
@@ -17,6 +17,37 @@
     y: number;
     style: NonNullable<ReturnType<BoardController["getSelectedStyleState"]>>;
   } | null = null;
+  let textEditor: {
+    id: string;
+    text: string;
+    kind: "text" | "sticky";
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    fontSize: number;
+    fillColor: string;
+    borderColor: string;
+    textColor: string;
+    textAlign: TextAlign;
+  } | null = null;
+  let textEditorRef: HTMLTextAreaElement | null = null;
+  let textEditorStyle: {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+    fontSize: number;
+    textAlign: TextAlign;
+    color: string;
+    background: string;
+    borderColor: string;
+    borderWidth: number;
+    paddingX: number;
+    paddingTop: number;
+    lineHeight: number;
+  } | null = null;
+
   const fillSwatches = [
     "transparent",
     "#ffffff",
@@ -26,6 +57,7 @@
     "#fee2e2",
     "#f5f3ff",
   ];
+
   const borderSwatches = [
     "transparent",
     "#111827",
@@ -41,6 +73,7 @@
     { label: "C", value: "center" },
     { label: "R", value: "right" },
   ];
+  const inlineEditorFontCalibration = 0.98;
 
   function handleCursorWorldChange(point: Point) {
     cursorWorld = point;
@@ -86,6 +119,10 @@
   }
 
   function handleKeydown(event: KeyboardEvent) {
+    if (textEditor) {
+      return;
+    }
+
     const isCopy =
       event.ctrlKey && !event.shiftKey && event.key.toLowerCase() === "c";
     const isDelete = event.key === "Delete";
@@ -182,6 +219,10 @@
   }
 
   function getSelectedOverlayState() {
+    if (textEditor) {
+      return null;
+    }
+
     const element = controller.getSingleSelectedElement();
     if (!element) {
       return null;
@@ -220,6 +261,84 @@
     $selectedElementIds;
     selectedOverlay = getSelectedOverlayState();
   }
+
+  function handleCanvasDoubleClick(worldPoint: Point) {
+    const target = controller.getEditableTextTargetAt(worldPoint);
+    if (!target) {
+      return;
+    }
+
+    textEditor = {
+      id: target.id,
+      text: target.text,
+      kind: target.kind,
+      x: target.x,
+      y: target.y,
+      width: target.width,
+      height: target.height,
+      fontSize: target.fontSize,
+      fillColor: target.fillColor,
+      borderColor: target.borderColor,
+      textColor: target.textColor,
+      textAlign: target.textAlign,
+    };
+  }
+
+  function commitTextEditor() {
+    if (!textEditor) {
+      return;
+    }
+    controller.updateElementText(textEditor.id, textEditor.text);
+    textEditor = null;
+  }
+
+  function cancelTextEditor() {
+    textEditor = null;
+  }
+
+  function getTextEditorStyle() {
+    if (!textEditor) {
+      return null;
+    }
+
+    const dpr = window.devicePixelRatio || 1;
+    const scale = $viewport.zoom / dpr;
+    const borderWidth = Math.max(1, scale);
+    const calibratedFontSize =
+      Math.max(1, Number(textEditor.fontSize) * scale) *
+      inlineEditorFontCalibration;
+    const lineHeight = calibratedFontSize * 1.3;
+    const leadingCompensation = (lineHeight - calibratedFontSize) / 2;
+    return {
+      left: (textEditor.x + $viewport.offsetX) * scale,
+      top: (textEditor.y + $viewport.offsetY) * scale,
+      width: Math.max(24, textEditor.width * scale),
+      height: Math.max(24, textEditor.height * scale),
+      fontSize: calibratedFontSize,
+      textAlign: textEditor.textAlign,
+      color: textEditor.textColor,
+      background: textEditor.fillColor,
+      borderColor: textEditor.borderColor,
+      borderWidth,
+      paddingX: Math.max(0, 8 * scale - borderWidth),
+      paddingTop: Math.max(
+        0,
+        (textEditor.kind === "sticky" ? 8 : 6) * scale -
+          borderWidth -
+          leadingCompensation,
+      ),
+      lineHeight,
+    };
+  }
+
+  $: {
+    textEditorStyle = textEditor ? getTextEditorStyle() : null;
+    if (textEditor) {
+      tick().then(() => {
+        textEditorRef?.focus();
+      });
+    }
+  }
 </script>
 
 <section class="whiteboard-shell">
@@ -236,8 +355,48 @@
       {controller}
       onCursorWorldChange={handleCursorWorldChange}
       onImageDrop={handleImageDrop}
+      onDoubleClick={handleCanvasDoubleClick}
     />
   </div>
+
+  {#if textEditor}
+    <textarea
+      bind:this={textEditorRef}
+      class="inline-text-editor"
+      style:left={`${textEditorStyle?.left ?? 24}px`}
+      style:top={`${textEditorStyle?.top ?? 24}px`}
+      style:width={`${textEditorStyle?.width ?? 220}px`}
+      style:height={`${textEditorStyle?.height ?? 100}px`}
+      style:font-size={`${textEditorStyle?.fontSize ?? 16}px`}
+      style:text-align={textEditorStyle?.textAlign ?? "left"}
+      style:color={textEditorStyle?.color ?? "#111827"}
+      style:background={textEditorStyle?.background ?? "#ffffff"}
+      style:border-color={textEditorStyle?.borderColor ?? "#6b7280"}
+      style:border-width={`${textEditorStyle?.borderWidth ?? 1}px`}
+      style:padding-left={`${textEditorStyle?.paddingX ?? 8}px`}
+      style:padding-right={`${textEditorStyle?.paddingX ?? 8}px`}
+      style:padding-top={`${textEditorStyle?.paddingTop ?? 6}px`}
+      style:line-height={`${textEditorStyle?.lineHeight ?? 20.8}px`}
+      bind:value={textEditor.text}
+      onblur={commitTextEditor}
+      onkeydown={(event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          cancelTextEditor();
+          return;
+        }
+
+        if (
+          event.key === "Enter" &&
+          (event.ctrlKey || event.metaKey) &&
+          !event.shiftKey
+        ) {
+          event.preventDefault();
+          commitTextEditor();
+        }
+      }}
+    ></textarea>
+  {/if}
 
   {#if selectedOverlay}
     <div
@@ -419,5 +578,18 @@
     background: #ef4444;
     transform: rotate(-35deg);
     border-radius: 999px;
+  }
+
+  .inline-text-editor {
+    position: absolute;
+    z-index: 60;
+    resize: none;
+    box-sizing: border-box;
+    border: 1px solid;
+    border-radius: 0;
+    padding: 6px 8px 0 8px;
+    line-height: 1.3;
+    outline: none;
+    font-family: Inter, system-ui, sans-serif;
   }
 </style>
