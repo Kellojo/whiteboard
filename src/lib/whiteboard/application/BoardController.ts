@@ -60,6 +60,15 @@ export interface EditableTextTarget {
   textAlign: TextAlign;
 }
 
+export interface LayerItem {
+  id: string;
+  type: string;
+  title: string;
+  isSelected: boolean;
+  canMoveForward: boolean;
+  canMoveBackward: boolean;
+}
+
 export class BoardController {
   private mode: InteractionMode = "idle";
   private dragStartWorld: Point | null = null;
@@ -431,6 +440,69 @@ export class BoardController {
         .getAllElements()
         .find((element) => element.id === id) ?? null
     );
+  }
+
+  getLayerItems(): LayerItem[] {
+    const elements = get(this.boardStore).getAllElements();
+    const total = elements.length;
+
+    return elements
+      .map((element, index) => {
+        const snapshot = element.toJSON();
+        const type = snapshot.type;
+        const rawText =
+          (type === "text" || type === "sticky") &&
+          typeof snapshot.text === "string"
+            ? snapshot.text.trim()
+            : "";
+        const title =
+          rawText.length > 0
+            ? rawText.slice(0, 30)
+            : `${type.charAt(0).toUpperCase()}${type.slice(1)}`;
+
+        return {
+          id: element.id,
+          type,
+          title,
+          isSelected: element.isSelected,
+          canMoveForward: index < total - 1,
+          canMoveBackward: index > 0,
+        };
+      })
+      .reverse();
+  }
+
+  selectSingleElement(id: string): void {
+    this.selectedElementIdsStore.set(new Set([id]));
+    this.syncSelectionFlags();
+  }
+
+  moveLayerForward(id: string): void {
+    this.boardStore.update((board) => {
+      board.moveElementBy(id, 1);
+      return board;
+    });
+  }
+
+  moveLayerBackward(id: string): void {
+    this.boardStore.update((board) => {
+      board.moveElementBy(id, -1);
+      return board;
+    });
+  }
+
+  bringLayerToFront(id: string): void {
+    this.boardStore.update((board) => {
+      board.moveElementToFront(id);
+      return board;
+    });
+  }
+
+  sendLayerToBack(id: string): void {
+    this.boardStore.update((board) => {
+      board.moveElementToBack(id);
+      return board;
+    });
   }
 
   updateElementText(id: string, text: string): void {
