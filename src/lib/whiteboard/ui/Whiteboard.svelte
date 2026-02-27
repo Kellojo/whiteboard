@@ -1,6 +1,7 @@
 <script lang="ts">
   import { get } from "svelte/store";
   import { onMount, tick } from "svelte";
+  import type { BoardJSON } from "../domain/Board";
   import { BoardController } from "../application/BoardController";
   import { SerializationService } from "../application/SerializationService";
   import type { CanvasElementJSON, Point, TextAlign } from "../domain/types";
@@ -8,18 +9,25 @@
   import CanvasRenderer from "./CanvasRenderer.svelte";
   import Toolbar, { type CreateKind } from "./Toolbar.svelte";
 
+  let { boardId = null }: { boardId?: string | null } = $props();
+
   const controller = new BoardController(board, viewport, selectedElementIds);
   const THEME_STORAGE_KEY = "whiteboard-theme";
 
   let cursorWorld: Point = { x: 0, y: 0 };
-  let themeMode: "light" | "dark" = "dark";
+  let themeMode = $state<"light" | "dark">("dark");
+  let boardName = $state("Untitled board");
+  let isBoardLoading = $state(false);
+  let autosaveTimer = $state<ReturnType<typeof setTimeout> | null>(null);
+  let hasLoadedRemoteBoard = $state(false);
+  let lastSavedSignature = $state("");
   let copiedSnapshots: CanvasElementJSON[] = [];
-  let selectedOverlay: {
+  let selectedOverlay = $state<{
     x: number;
     y: number;
     style: NonNullable<ReturnType<BoardController["getSelectedStyleState"]>>;
-  } | null = null;
-  let textEditor: {
+  } | null>(null);
+  let textEditor = $state<{
     id: string;
     text: string;
     kind: "text" | "sticky";
@@ -32,9 +40,9 @@
     borderColor: string;
     textColor: string;
     textAlign: TextAlign;
-  } | null = null;
-  let textEditorRef: HTMLTextAreaElement | null = null;
-  let textEditorStyle: {
+  } | null>(null);
+  let textEditorRef = $state<HTMLTextAreaElement | null>(null);
+  let textEditorStyle = $state<{
     left: number;
     top: number;
     width: number;
@@ -48,7 +56,7 @@
     paddingX: number;
     paddingTop: number;
     lineHeight: number;
-  } | null = null;
+  } | null>(null);
 
   const fillSwatches = [
     "transparent",
@@ -89,6 +97,72 @@
 
   function toggleTheme() {
     setTheme(themeMode === "dark" ? "light" : "dark");
+  }
+
+  function handleBack() {
+    window.location.assign("/");
+  }
+
+  async function loadBoardFromServer(id: string) {
+    isBoardLoading = true;
+    try {
+      const response = await fetch(`/api/boards/${id}`);
+      if (!response.ok) {
+        throw new Error("Failed to load board");
+      }
+
+      const result = (await response.json()) as {
+        board: { name: string; payload: BoardJSON };
+      };
+      const payloadText = JSON.stringify(result.board.payload);
+      boardName = result.board.name;
+      const imported = SerializationService.importBoard(payloadText);
+      board.set(imported.board);
+      viewport.set(imported.viewport ?? { zoom: 1, offsetX: 0, offsetY: 0 });
+      selectedElementIds.set(new Set());
+      hasLoadedRemoteBoard = true;
+      lastSavedSignature = payloadText;
+    } catch (error) {
+      console.error(error);
+    } finally {
+      isBoardLoading = false;
+    }
+  }
+
+  function queueAutosave() {
+    if (!boardId || !hasLoadedRemoteBoard) {
+      return;
+    }
+
+    if (autosaveTimer) {
+      clearTimeout(autosaveTimer);
+    }
+
+    autosaveTimer = setTimeout(async () => {
+      autosaveTimer = null;
+      const payloadText = SerializationService.exportBoard(get(board), {
+        viewport: get(viewport),
+      });
+
+      if (payloadText === lastSavedSignature) {
+        return;
+      }
+
+      try {
+        const payload = JSON.parse(payloadText) as BoardJSON;
+        const response = await fetch(`/api/boards/${boardId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ payload }),
+        });
+
+        if (response.ok) {
+          lastSavedSignature = payloadText;
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }, 700);
   }
 
   function handleCreate(kind: CreateKind) {
@@ -168,10 +242,26 @@
 
     window.addEventListener("keydown", handleKeydown);
     window.addEventListener("paste", handlePaste);
+
+    if (boardId) {
+      void loadBoardFromServer(boardId);
+    }
+
     return () => {
+      if (autosaveTimer) {
+        clearTimeout(autosaveTimer);
+      }
       window.removeEventListener("keydown", handleKeydown);
       window.removeEventListener("paste", handlePaste);
     };
+  });
+
+  $effect(() => {
+    $board;
+    $viewport;
+    if (hasLoadedRemoteBoard) {
+      queueAutosave();
+    }
   });
 
   async function handlePaste(event: ClipboardEvent) {
@@ -277,12 +367,12 @@
     };
   }
 
-  $: {
+  $effect(() => {
     $board;
     $viewport;
     $selectedElementIds;
     selectedOverlay = getSelectedOverlayState();
-  }
+  });
 
   function handleCanvasDoubleClick(worldPoint: Point) {
     const target = controller.getEditableTextTargetAt(worldPoint);
@@ -353,18 +443,25 @@
     };
   }
 
-  $: {
+  $effect(() => {
     textEditorStyle = textEditor ? getTextEditorStyle() : null;
     if (textEditor) {
       tick().then(() => {
         textEditorRef?.focus();
       });
     }
-  }
+  });
 </script>
 
 <section class="whiteboard-shell">
+  <div class="board-title" title={boardName}>{boardName}</div>
+
+  {#if isBoardLoading}
+    <div class="board-loading">Loading board...</div>
+  {/if}
+
   <Toolbar
+    onBack={boardId ? handleBack : undefined}
     onCreate={handleCreate}
     onDelete={handleDelete}
     onExport={handleExport}
@@ -511,6 +608,39 @@
   .board-area {
     flex: 1;
     min-height: 0;
+  }
+
+  .board-loading {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 100;
+    border: 1px solid var(--border-1);
+    background: var(--surface-1);
+    color: var(--app-text-muted);
+    border-radius: 10px;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .board-title {
+    position: fixed;
+    top: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 90;
+    max-width: min(70vw, 680px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border: 1px solid var(--border-1);
+    background: var(--surface-1);
+    color: var(--app-text);
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: var(--shadow-s);
   }
 
   .selected-toolbar {

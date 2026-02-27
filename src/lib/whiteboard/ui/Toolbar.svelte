@@ -2,6 +2,7 @@
   export type CreateKind = "rectangle" | "ellipse" | "text" | "sticky";
 
   let {
+    onBack,
     onCreate,
     onDelete,
     onExport,
@@ -9,6 +10,7 @@
     themeMode,
     onToggleTheme,
   }: {
+    onBack?: () => void;
     onCreate: (kind: CreateKind) => void;
     onDelete: () => void;
     onExport: () => void;
@@ -27,6 +29,9 @@
 
 <div class="toolbar">
   <div class="actions">
+    {#if onBack}
+      <button type="button" onclick={onBack}>← Back</button>
+    {/if}
     <button type="button" onclick={onToggleTheme}
       >{themeMode === "dark" ? "Light mode" : "Dark mode"}</button
     >

@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "id": "mm5fdl1c-bccds84l",
+  "name": "My board!!!",
+  "createdAt": "2026-02-27T21:49:40.416Z",
+  "updatedAt": "2026-02-27T21:51:25.182Z",
+  "payload": {
+    "elements": [],
+    "viewport": {
+      "zoom": 1,
+      "offsetX": 0,
+      "offsetY": 0
+    }
+  }
+}
