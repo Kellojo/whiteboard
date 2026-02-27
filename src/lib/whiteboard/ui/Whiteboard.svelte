@@ -9,6 +9,8 @@
   import arrowDownIcon from "@iconify-icons/lucide/arrow-down";
   import chevronsUpIcon from "@iconify-icons/lucide/chevrons-up";
   import chevronsDownIcon from "@iconify-icons/lucide/chevrons-down";
+  import playIcon from "@iconify-icons/lucide/play";
+  import squareIcon from "@iconify-icons/lucide/square";
   import { flip } from "svelte/animate";
   import { get } from "svelte/store";
   import { onMount, tick } from "svelte";
@@ -16,6 +18,7 @@
   import type { BoardJSON } from "../domain/Board";
   import { BoardController } from "../application/BoardController";
   import { SerializationService } from "../application/SerializationService";
+  import { VideoElement } from "../domain/VideoElement";
   import type { CanvasElementJSON, Point, TextAlign } from "../domain/types";
   import { board, selectedElementIds, viewport } from "../stores";
   import CanvasRenderer from "./CanvasRenderer.svelte";
@@ -70,6 +73,25 @@
     lineHeight: number;
   } | null>(null);
   let layerItems = $state<ReturnType<BoardController["getLayerItems"]>>([]);
+  let videoOverlays = $state<
+    {
+      id: string;
+      embedUrl: string;
+      left: number;
+      top: number;
+      width: number;
+      height: number;
+      zIndex: number;
+      interactive: boolean;
+    }[]
+  >([]);
+  let interactiveVideoId = $state<string | null>(null);
+  let selectedVideoControl = $state<{
+    id: string;
+    x: number;
+    y: number;
+    interactive: boolean;
+  } | null>(null);
 
   const fillSwatches = [
     "transparent",
@@ -243,6 +265,11 @@
   }
 
   function handleKeydown(event: KeyboardEvent) {
+    if (event.key === "Escape" && interactiveVideoId) {
+      interactiveVideoId = null;
+      return;
+    }
+
     if (textEditor) {
       return;
     }
@@ -324,17 +351,71 @@
       return;
     }
 
+    const plainText = event.clipboardData?.getData("text/plain") ?? "";
+    if (plainText.trim().length > 0) {
+      const createdVideo = controller.addYouTubeVideoElement(
+        plainText,
+        cursorWorld,
+      );
+      if (createdVideo) {
+        event.preventDefault();
+        return;
+      }
+    }
+
     if (copiedSnapshots.length > 0) {
       event.preventDefault();
       controller.pasteSnapshotsAt(copiedSnapshots, cursorWorld);
       return;
     }
 
-    const plainText = event.clipboardData?.getData("text/plain") ?? "";
     if (plainText.trim().length > 0) {
       event.preventDefault();
       controller.addTextElement(plainText, cursorWorld);
     }
+  }
+
+  function getVideoOverlayItems() {
+    const dpr = window.devicePixelRatio || 1;
+    const scale = $viewport.zoom / dpr;
+
+    return $board
+      .getAllElements()
+      .map((element, index) => ({ element, index }))
+      .flatMap(({ element, index }) => {
+        const snapshot = element.toJSON();
+        if (snapshot.type !== "video") {
+          return [];
+        }
+
+        if (element.isSelected) {
+          return [];
+        }
+
+        const embedUrl = VideoElement.toEmbedUrl(snapshot.videoUrl ?? "");
+        if (!embedUrl) {
+          return [];
+        }
+
+        const interactive = interactiveVideoId === element.id;
+        const shouldRender = !element.isSelected || interactive;
+        if (!shouldRender) {
+          return [];
+        }
+
+        return [
+          {
+            id: element.id,
+            embedUrl,
+            left: (element.x + $viewport.offsetX) * scale,
+            top: (element.y + $viewport.offsetY) * scale,
+            width: Math.max(120, element.width * scale),
+            height: Math.max(80, element.height * scale),
+            zIndex: 10 + index,
+            interactive,
+          },
+        ];
+      });
   }
 
   async function handleImageDrop(files: File[], worldPoint: Point) {
@@ -426,15 +507,62 @@
     };
   }
 
+  function getSelectedVideoControlState() {
+    const element = controller.getSingleSelectedElement();
+    if (!element) {
+      return null;
+    }
+
+    if (element.toJSON().type !== "video") {
+      return null;
+    }
+
+    const dpr = window.devicePixelRatio || 1;
+    const centerX =
+      ((element.x + element.width / 2 + $viewport.offsetX) * $viewport.zoom) /
+      dpr;
+    const topY = ((element.y + $viewport.offsetY) * $viewport.zoom) / dpr;
+
+    return {
+      id: element.id,
+      x: centerX,
+      y: Math.max(10, topY - 56),
+      interactive: interactiveVideoId === element.id,
+    };
+  }
+
+  function toggleVideoPlayMode(id: string) {
+    interactiveVideoId = interactiveVideoId === id ? null : id;
+  }
+
   $effect(() => {
     $board;
     $viewport;
     $selectedElementIds;
     selectedOverlay = getSelectedOverlayState();
+    selectedVideoControl = getSelectedVideoControlState();
     layerItems = controller.getLayerItems();
+    videoOverlays = getVideoOverlayItems();
+
+    if (
+      interactiveVideoId &&
+      $selectedElementIds.size > 0 &&
+      !$selectedElementIds.has(interactiveVideoId)
+    ) {
+      interactiveVideoId = null;
+    }
   });
 
   function handleCanvasDoubleClick(worldPoint: Point) {
+    const hit = controller.getElementAt(worldPoint);
+    if (hit?.toJSON().type === "video") {
+      controller.selectSingleElement(hit.id);
+      tick().then(() => {
+        interactiveVideoId = hit.id;
+      });
+      return;
+    }
+
     const target = controller.getEditableTextTargetAt(worldPoint);
     if (!target) {
       return;
@@ -539,6 +667,28 @@
       onDoubleClick={handleCanvasDoubleClick}
     />
   </div>
+
+  {#each videoOverlays as video (video.id)}
+    <div
+      class="video-overlay"
+      style:left={`${video.left}px`}
+      style:top={`${video.top}px`}
+      style:width={`${video.width}px`}
+      style:height={`${video.height}px`}
+      style:z-index={`${video.zIndex}`}
+      class:interactive={video.interactive}
+    >
+      <iframe
+        class="video-frame"
+        src={video.embedUrl}
+        title="Embedded YouTube video"
+        loading="lazy"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allowfullscreen
+      ></iframe>
+    </div>
+  {/each}
 
   {#if $selectedElementIds.size > 0}
     <aside class="layers-panel" transition:fade={{ duration: 140 }}>
@@ -734,6 +884,31 @@
       {/if}
     </div>
   {/if}
+
+  {#if selectedVideoControl}
+    <div
+      class="video-mode-toolbar"
+      style:left={`${selectedVideoControl.x}px`}
+      style:top={`${selectedVideoControl.y}px`}
+    >
+      <button
+        type="button"
+        class:active={selectedVideoControl.interactive}
+        title={selectedVideoControl.interactive
+          ? "Exit play mode"
+          : "Enter play mode"}
+        onclick={() =>
+          selectedVideoControl && toggleVideoPlayMode(selectedVideoControl.id)}
+      >
+        <Icon
+          icon={selectedVideoControl.interactive ? squareIcon : playIcon}
+          width="14"
+          height="14"
+        />
+        {selectedVideoControl.interactive ? "Stop" : "Play"}
+      </button>
+    </div>
+  {/if}
 </section>
 
 <style>
@@ -894,6 +1069,32 @@
     box-shadow: var(--shadow-s);
   }
 
+  .video-overlay {
+    position: absolute;
+    overflow: hidden;
+    border-radius: 10px;
+    border: 1px solid var(--border-2);
+    background: #000;
+    box-shadow: var(--shadow-m);
+    pointer-events: none;
+  }
+
+  .video-overlay.interactive {
+    pointer-events: auto;
+  }
+
+  .video-frame {
+    border: none;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    display: block;
+  }
+
+  .video-overlay.interactive .video-frame {
+    pointer-events: auto;
+  }
+
   .selected-toolbar {
     position: absolute;
     transform: translateX(-50%);
@@ -906,6 +1107,42 @@
     border-radius: 10px;
     padding: 6px;
     box-shadow: var(--shadow-m);
+  }
+
+  .video-mode-toolbar {
+    position: absolute;
+    transform: translateX(-50%);
+    z-index: 55;
+    display: inline-flex;
+    align-items: center;
+    background: var(--surface-1);
+    border: 1px solid var(--border-1);
+    border-radius: 10px;
+    padding: 6px;
+    box-shadow: var(--shadow-m);
+  }
+
+  .video-mode-toolbar button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--border-1);
+    background: var(--button-bg);
+    color: var(--button-text);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  .video-mode-toolbar button:hover {
+    background: var(--button-bg-hover);
+    border-color: var(--border-2);
+  }
+
+  .video-mode-toolbar button.active {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
   }
 
   .mini-group {

@@ -4,6 +4,7 @@ import { ImageElement } from "./ImageElement";
 import { RectangleElement } from "./RectangleElement";
 import { StickyNoteElement } from "./StickyNoteElement";
 import { TextElement } from "./TextElement";
+import { VideoElement } from "./VideoElement";
 import type { CanvasElementJSON } from "./types";
 
 export function elementFromJSON(json: CanvasElementJSON): CanvasElement {
@@ -18,6 +19,8 @@ export function elementFromJSON(json: CanvasElementJSON): CanvasElement {
       return StickyNoteElement.fromJSON(json);
     case "image":
       return ImageElement.fromJSON(json);
+    case "video":
+      return VideoElement.fromJSON(json);
     default:
       throw new Error(`Unknown element type: ${json.type}`);
   }

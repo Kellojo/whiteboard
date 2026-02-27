@@ -7,6 +7,7 @@ import { ImageElement } from "../domain/ImageElement";
 import { RectangleElement } from "../domain/RectangleElement";
 import { StickyNoteElement } from "../domain/StickyNoteElement";
 import { TextElement } from "../domain/TextElement";
+import { VideoElement } from "../domain/VideoElement";
 import type { CanvasElementJSON, Point, TextAlign } from "../domain/types";
 import type { ViewportState } from "../stores";
 
@@ -406,6 +407,32 @@ export class BoardController {
     });
   }
 
+  addYouTubeVideoElement(url: string, position: Point): boolean {
+    const embedUrl = VideoElement.toEmbedUrl(url);
+    if (!embedUrl) {
+      return false;
+    }
+
+    const width = 420;
+    const height = 236;
+
+    this.boardStore.update((board) => {
+      board.addElement(
+        new VideoElement({
+          id: crypto.randomUUID(),
+          x: position.x - width / 2,
+          y: position.y - height / 2,
+          width,
+          height,
+          videoUrl: url.trim(),
+        }),
+      );
+      return board;
+    });
+
+    return true;
+  }
+
   copySelectionSnapshots(): CanvasElementJSON[] {
     return get(this.boardStore)
       .getSelectedElements()
@@ -442,6 +469,10 @@ export class BoardController {
     );
   }
 
+  getElementAt(point: Point): CanvasElement | null {
+    return get(this.boardStore).hitTest(point) ?? null;
+  }
+
   getLayerItems(): LayerItem[] {
     const elements = get(this.boardStore).getAllElements();
     const total = elements.length;
@@ -450,6 +481,10 @@ export class BoardController {
       .map((element, index) => {
         const snapshot = element.toJSON();
         const type = snapshot.type;
+        const videoTitle =
+          type === "video" && typeof snapshot.videoUrl === "string"
+            ? "YouTube video"
+            : "";
         const rawText =
           (type === "text" || type === "sticky") &&
           typeof snapshot.text === "string"
@@ -458,7 +493,9 @@ export class BoardController {
         const title =
           rawText.length > 0
             ? rawText.slice(0, 30)
-            : `${type.charAt(0).toUpperCase()}${type.slice(1)}`;
+            : videoTitle.length > 0
+              ? videoTitle
+              : `${type.charAt(0).toUpperCase()}${type.slice(1)}`;
 
         return {
           id: element.id,

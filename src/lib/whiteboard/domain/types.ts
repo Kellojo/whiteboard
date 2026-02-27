@@ -27,4 +27,5 @@ export interface CanvasElementJSON {
   borderColor?: string;
   textAlign?: TextAlign;
   imageDataUrl?: string;
+  videoUrl?: string;
 }
