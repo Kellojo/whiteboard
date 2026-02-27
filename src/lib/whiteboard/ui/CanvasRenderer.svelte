@@ -26,9 +26,14 @@
   let lastClickTimestamp = 0;
   let lastClickPoint: Point | null = null;
 
-  const selectionStroke = "#2563eb";
-  const previewStroke = "#16a34a";
   const handleSize = 10;
+
+  function getThemeColor(variableName: string, fallback: string): string {
+    const value = getComputedStyle(document.documentElement)
+      .getPropertyValue(variableName)
+      .trim();
+    return value || fallback;
+  }
 
   onMount(() => {
     let frame = 0;
@@ -73,7 +78,11 @@
       element.draw(ctx);
     }
 
-    drawOverlayRect(ctx, controller.getSelectionRect(), selectionStroke);
+    drawOverlayRect(
+      ctx,
+      controller.getSelectionRect(),
+      getThemeColor("--accent", "#2563eb"),
+    );
     drawResizeHandles(ctx);
     ctx.restore();
   }
@@ -87,8 +96,8 @@
     const size = handleSize / Math.max(0.0001, viewport.zoom);
     for (const handle of handles) {
       ctx.save();
-      ctx.fillStyle = "#ffffff";
-      ctx.strokeStyle = "#2563eb";
+      ctx.fillStyle = getThemeColor("--handle-fill", "#ffffff");
+      ctx.strokeStyle = getThemeColor("--accent", "#2563eb");
       ctx.lineWidth = 1 / Math.max(0.0001, viewport.zoom);
       ctx.fillRect(handle.x - size / 2, handle.y - size / 2, size, size);
       ctx.strokeRect(handle.x - size / 2, handle.y - size / 2, size, size);
@@ -119,7 +128,7 @@
     }
 
     ctx.save();
-    ctx.strokeStyle = "#f3f4f6";
+    ctx.strokeStyle = getThemeColor("--canvas-grid", "#f3f4f6");
     ctx.lineWidth = 1;
 
     for (
@@ -295,7 +304,7 @@
   .canvas-host {
     width: 100%;
     height: 100%;
-    background: white;
+    background: var(--canvas-bg);
     overflow: hidden;
   }
 

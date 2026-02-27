@@ -1,17 +1,31 @@
-:root {
-  --primaryText: hsl(0, 0%, 90%);
-  --secondaryText: hsl(0, 0%, 60%);
-  --backgroundDark: hsl(0, 0%, 0%);
-  --background: hsl(0, 0%, 5%, 50%);
-  --backgroundTextContrastShadow: hsl(0, 0%, 5%, 25%);
-  --backgroundLight: hsl(0, 0%, 10%);
-  --borderColor: hsl(0, 0%, 15%, 90%);
-  --borderHoverColor: hsl(0, 0%, 25%, 90%);
+:root,
+:root[data-theme="dark"] {
+  --app-bg: hsl(225 18% 7%);
+  --app-text: hsl(220 25% 92%);
+  --app-text-muted: hsl(220 10% 68%);
 
-  --shadow-highlight: hsla(0, 0%, 100%, 15%);
-  --shadow-dark: hsla(0, 0%, 0%, 30%);
-  --shadow-mid: hsla(0, 0%, 0%, 15%);
+  --surface-1: hsl(222 18% 10% / 0.94);
+  --surface-2: hsl(222 16% 14% / 0.96);
+  --surface-inset: hsl(222 22% 8% / 0.75);
 
+  --border-1: hsl(220 16% 24% / 0.9);
+  --border-2: hsl(220 16% 34% / 0.9);
+
+  --button-bg: hsl(221 20% 16%);
+  --button-bg-hover: hsl(221 20% 22%);
+  --button-text: hsl(220 25% 92%);
+
+  --accent: hsl(217 92% 62%);
+  --accent-strong: hsl(217 92% 70%);
+  --danger: hsl(0 78% 63%);
+
+  --canvas-bg: hsl(222 24% 10%);
+  --canvas-grid: hsl(221 16% 20%);
+  --handle-fill: hsl(222 24% 96%);
+
+  --shadow-highlight: hsla(0, 0%, 100%, 0.08);
+  --shadow-dark: hsla(0, 0%, 0%, 0.3);
+  --shadow-mid: hsla(0, 0%, 0%, 0.2);
   --shadow-s:
     inset 0 1px 2px var(--shadow-highlight), 0 1px 2px var(--shadow-dark),
     0 2px 4px var(--shadow-mid);
@@ -22,15 +36,21 @@
     inset 0 1px 2px var(--shadow-highlight), 0 4px 6px var(--shadow-dark),
     0 6px 10px var(--shadow-mid);
 
+  --primaryText: var(--app-text);
+  --secondaryText: var(--app-text-muted);
+  --backgroundDark: var(--surface-1);
+  --background: var(--surface-inset);
+  --backgroundTextContrastShadow: hsla(0, 0%, 0%, 0.3);
+  --backgroundLight: var(--surface-2);
+  --borderColor: var(--border-1);
+  --borderHoverColor: var(--border-2);
+
   --success: hsl(108, 60%, 57%);
   --successSecondary: hsl(108, 60%, 17%);
-
   --warning: hsl(39, 100%, 50%);
   --warningSecondary: hsl(39, 100%, 10%);
-
   --error: hsl(0, 80%, 60%);
   --errorSecondary: hsl(0, 80%, 20%);
-
   --info: hsl(204, 100%, 50%);
   --infoSecondary: hsl(204, 100%, 15%);
 
@@ -38,15 +58,51 @@
   --cellGap: 1rem;
 }
 
+:root[data-theme="light"] {
+  --app-bg: hsl(210 30% 97%);
+  --app-text: hsl(222 47% 11%);
+  --app-text-muted: hsl(215 16% 40%);
+
+  --surface-1: hsl(0 0% 100% / 0.96);
+  --surface-2: hsl(210 40% 98% / 0.98);
+  --surface-inset: hsl(220 14% 96% / 0.88);
+
+  --border-1: hsl(215 20% 84% / 0.95);
+  --border-2: hsl(215 18% 74% / 0.95);
+
+  --button-bg: hsl(210 35% 96%);
+  --button-bg-hover: hsl(210 35% 92%);
+  --button-text: hsl(222 47% 11%);
+
+  --accent: hsl(217 91% 53%);
+  --accent-strong: hsl(217 91% 45%);
+  --danger: hsl(0 72% 53%);
+
+  --canvas-bg: hsl(0 0% 100%);
+  --canvas-grid: hsl(210 20% 90%);
+  --handle-fill: hsl(0 0% 100%);
+
+  --shadow-highlight: hsla(0, 0%, 100%, 0.9);
+  --shadow-dark: hsla(222, 35%, 12%, 0.12);
+  --shadow-mid: hsla(222, 35%, 12%, 0.08);
+}
+
 :root {
   min-height: 100%;
-  background-color: var(--backgroundDark);
-  color: var(--primaryText);
+  color-scheme: dark light;
+  background-color: var(--app-bg);
+  color: var(--app-text);
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
   min-height: 100vh;
+  background-color: var(--app-bg);
+  color: var(--app-text);
+  font-family: Inter, system-ui, sans-serif;
 }

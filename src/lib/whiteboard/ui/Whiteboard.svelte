@@ -9,8 +9,10 @@
   import Toolbar, { type CreateKind } from "./Toolbar.svelte";
 
   const controller = new BoardController(board, viewport, selectedElementIds);
+  const THEME_STORAGE_KEY = "whiteboard-theme";
 
   let cursorWorld: Point = { x: 0, y: 0 };
+  let themeMode: "light" | "dark" = "dark";
   let copiedSnapshots: CanvasElementJSON[] = [];
   let selectedOverlay: {
     x: number;
@@ -79,6 +81,16 @@
     cursorWorld = point;
   }
 
+  function setTheme(mode: "light" | "dark") {
+    themeMode = mode;
+    document.documentElement.setAttribute("data-theme", mode);
+    localStorage.setItem(THEME_STORAGE_KEY, mode);
+  }
+
+  function toggleTheme() {
+    setTheme(themeMode === "dark" ? "light" : "dark");
+  }
+
   function handleCreate(kind: CreateKind) {
     controller.createElement(kind, cursorWorld);
   }
@@ -144,6 +156,16 @@
   }
 
   onMount(() => {
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    if (stored === "light" || stored === "dark") {
+      setTheme(stored);
+    } else {
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)",
+      ).matches;
+      setTheme(prefersDark ? "dark" : "light");
+    }
+
     window.addEventListener("keydown", handleKeydown);
     window.addEventListener("paste", handlePaste);
     return () => {
@@ -347,6 +369,8 @@
     onDelete={handleDelete}
     onExport={handleExport}
     onImport={handleImport}
+    {themeMode}
+    onToggleTheme={toggleTheme}
   />
   <div class="board-area">
     <CanvasRenderer
@@ -369,9 +393,9 @@
       style:height={`${textEditorStyle?.height ?? 100}px`}
       style:font-size={`${textEditorStyle?.fontSize ?? 16}px`}
       style:text-align={textEditorStyle?.textAlign ?? "left"}
-      style:color={textEditorStyle?.color ?? "#111827"}
-      style:background={textEditorStyle?.background ?? "#ffffff"}
-      style:border-color={textEditorStyle?.borderColor ?? "#6b7280"}
+      style:color={textEditorStyle?.color ?? "var(--app-text)"}
+      style:background={textEditorStyle?.background ?? "var(--surface-1)"}
+      style:border-color={textEditorStyle?.borderColor ?? "var(--border-2)"}
       style:border-width={`${textEditorStyle?.borderWidth ?? 1}px`}
       style:padding-left={`${textEditorStyle?.paddingX ?? 8}px`}
       style:padding-right={`${textEditorStyle?.paddingX ?? 8}px`}
@@ -481,7 +505,7 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
-    background: #f8fafc;
+    background: var(--app-bg);
   }
 
   .board-area {
@@ -496,11 +520,11 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
+    background: var(--surface-1);
+    border: 1px solid var(--border-1);
     border-radius: 10px;
     padding: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-m);
   }
 
   .mini-group {
@@ -508,7 +532,7 @@
     align-items: center;
     gap: 6px;
     padding-right: 6px;
-    border-right: 1px solid #e5e7eb;
+    border-right: 1px solid var(--border-1);
   }
 
   .mini-group:last-child {
@@ -517,8 +541,9 @@
   }
 
   .mini-group button {
-    border: 1px solid #d1d5db;
-    background: #f9fafb;
+    border: 1px solid var(--border-1);
+    background: var(--button-bg);
+    color: var(--button-text);
     border-radius: 6px;
     min-width: 24px;
     height: 24px;
@@ -539,11 +564,11 @@
     min-width: 28px;
     text-align: center;
     font-size: 12px;
-    color: #374151;
+    color: var(--app-text-muted);
   }
 
   .mini-group button.active {
-    outline: 2px solid #2563eb;
+    outline: 2px solid var(--accent);
     outline-offset: 1px;
   }
 
@@ -556,10 +581,14 @@
 
   .transparent-swatch {
     position: relative;
-    background-image: linear-gradient(45deg, #e5e7eb 25%, transparent 25%),
-      linear-gradient(-45deg, #e5e7eb 25%, transparent 25%),
-      linear-gradient(45deg, transparent 75%, #e5e7eb 75%),
-      linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
+    background-image: linear-gradient(
+        45deg,
+        var(--border-1) 25%,
+        transparent 25%
+      ),
+      linear-gradient(-45deg, var(--border-1) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, var(--border-1) 75%),
+      linear-gradient(-45deg, transparent 75%, var(--border-1) 75%);
     background-size: 10px 10px;
     background-position:
       0 0,
@@ -575,7 +604,7 @@
     top: 10px;
     width: 14px;
     height: 2px;
-    background: #ef4444;
+    background: var(--danger);
     transform: rotate(-35deg);
     border-radius: 999px;
   }
@@ -591,5 +620,6 @@
     line-height: 1.3;
     outline: none;
     font-family: Inter, system-ui, sans-serif;
+    color: var(--app-text);
   }
 </style>

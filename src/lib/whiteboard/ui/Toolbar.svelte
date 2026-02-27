@@ -6,11 +6,15 @@
     onDelete,
     onExport,
     onImport,
+    themeMode,
+    onToggleTheme,
   }: {
     onCreate: (kind: CreateKind) => void;
     onDelete: () => void;
     onExport: () => void;
     onImport: (event: Event) => void;
+    themeMode: "light" | "dark";
+    onToggleTheme: () => void;
   } = $props();
 
   const createButtons: { label: string; kind: CreateKind }[] = [
@@ -23,7 +27,9 @@
 
 <div class="toolbar">
   <div class="actions">
-    <button type="button" onclick={onDelete}>Delete</button>
+    <button type="button" onclick={onToggleTheme}
+      >{themeMode === "dark" ? "Light mode" : "Dark mode"}</button
+    >
     <button type="button" onclick={onExport}>Export JSON</button>
     <label class="import-button">
       Import JSON
@@ -39,8 +45,7 @@
   </div>
 </div>
 <p class="hint">
-  Select mode is always active. Pan with Alt + drag (or middle mouse drag).
-  Copy/paste with Ctrl+C / Ctrl+V.
+  Pan with Alt + drag (or middle mouse drag). Copy/paste with Ctrl+C / Ctrl+V.
 </p>
 
 <style>
@@ -85,12 +90,22 @@
 
   button,
   .import-button {
-    border: 1px solid #d1d5db;
-    background: #f9fafb;
+    border: 1px solid var(--border-1);
+    color: var(--button-text);
+    background: var(--button-bg);
     padding: 6px 10px;
     font-size: 14px;
     border-radius: 8px;
     cursor: pointer;
+    transition:
+      background-color 140ms ease,
+      border-color 140ms ease;
+  }
+
+  button:hover,
+  .import-button:hover {
+    background: var(--button-bg-hover);
+    border-color: var(--border-2);
   }
 
   input[type="file"] {
@@ -107,9 +122,9 @@
     margin: 0;
     padding: 4px 10px;
     font-size: 12px;
-    color: #6b7280;
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid #e5e7eb;
+    color: var(--app-text-muted);
+    background: var(--surface-1);
+    border: 1px solid var(--border-1);
     border-radius: 10px;
   }
 </style>
