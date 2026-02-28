@@ -41,11 +41,13 @@ export interface SelectedStyleState {
   controls: {
     fillColor: boolean;
     borderColor: boolean;
+    textColor: boolean;
     textAlign: boolean;
     fontSize: boolean;
   };
   fillColor: string | null;
   borderColor: string | null;
+  textColor: string | null;
   textAlign: TextAlign | null;
   fontSize: number | null;
   canDecreaseFontSize: boolean;
@@ -463,7 +465,7 @@ export class BoardController {
       fontSize: hit.fontSize,
       fillColor: hit.fillColor,
       borderColor: hit.borderColor,
-      textColor: hit instanceof StickyNoteElement ? "#1f2937" : "#111827",
+      textColor: hit.textColor,
       textAlign: hit instanceof StickyNoteElement ? "center" : hit.textAlign,
     };
   }
@@ -584,6 +586,10 @@ export class BoardController {
       "borderColor" in selected && typeof selected.borderColor === "string"
         ? selected.borderColor
         : null;
+    const textColor =
+      "textColor" in selected && typeof selected.textColor === "string"
+        ? selected.textColor
+        : null;
     const hasTextAlign =
       "textAlign" in selected &&
       (selected.textAlign === "left" ||
@@ -598,17 +604,20 @@ export class BoardController {
         : null;
     const hasFillColor = fillColor !== null;
     const hasBorderColor = borderColor !== null;
+    const hasTextColor = textColor !== null;
     const hasFontSize = fontSize !== null;
 
     return {
       controls: {
         fillColor: controls.fillColor && hasFillColor,
         borderColor: controls.borderColor && hasBorderColor,
+        textColor: controls.textColor && hasTextColor,
         textAlign: controls.textAlign && hasTextAlign,
         fontSize: controls.fontSize && hasFontSize,
       },
       fillColor,
       borderColor,
+      textColor,
       textAlign,
       fontSize,
       canDecreaseFontSize: this.canAdjustFontSize(selected, "decrease"),
@@ -656,6 +665,14 @@ export class BoardController {
     this.applyStyleToSingleSelected((element) => {
       if ("borderColor" in element) {
         element.borderColor = borderColor;
+      }
+    });
+  }
+
+  setSelectedTextColor(textColor: string): void {
+    this.applyStyleToSingleSelected((element) => {
+      if ("textColor" in element) {
+        element.textColor = textColor;
       }
     });
   }

@@ -11,6 +11,8 @@
   import chevronsDownIcon from "@iconify-icons/lucide/chevrons-down";
   import playIcon from "@iconify-icons/lucide/play";
   import squareIcon from "@iconify-icons/lucide/square";
+  import paintBucketIcon from "@iconify-icons/lucide/paint-bucket";
+  import typeIcon from "@iconify-icons/lucide/type";
   import { flip } from "svelte/animate";
   import { get } from "svelte/store";
   import { onMount, tick } from "svelte";
@@ -92,6 +94,7 @@
     y: number;
     interactive: boolean;
   } | null>(null);
+  let openColorPicker = $state<"border" | "fill" | "text" | null>(null);
 
   const fillSwatches = [
     "transparent",
@@ -113,13 +116,95 @@
     "#dc2626",
   ];
 
+  const textSwatches = [
+    "#111827",
+    "#1f2937",
+    "#374151",
+    "#2563eb",
+    "#16a34a",
+    "#ca8a04",
+    "#dc2626",
+    "#ffffff",
+  ];
+
   const textAlignOptions = [
     { label: "Align left", icon: alignLeftIcon, value: "left" },
     { label: "Align center", icon: alignCenterIcon, value: "center" },
     { label: "Align right", icon: alignRightIcon, value: "right" },
   ] satisfies { label: string; icon: object; value: TextAlign }[];
+  const HEX_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
+  const defaultBorderPickerColor = "#111827";
+  const defaultFillPickerColor = "#ffffff";
+  const defaultTextPickerColor = "#111827";
   const inlineEditorFontCalibration = 0.98;
   let textMeasureContext: CanvasRenderingContext2D | null | undefined;
+
+  function getColorPickerValue(
+    color: string | null | undefined,
+    fallback: string,
+  ): string {
+    if (typeof color === "string" && HEX_COLOR_PATTERN.test(color)) {
+      return color;
+    }
+    return fallback;
+  }
+
+  function isCustomColorSelected(
+    color: string | null | undefined,
+    swatches: string[],
+  ): boolean {
+    if (typeof color !== "string") {
+      return false;
+    }
+    const normalizedSwatches = swatches.map((value) => value.toLowerCase());
+    return !normalizedSwatches.includes(color.toLowerCase());
+  }
+
+  function toggleColorPicker(kind: "border" | "fill" | "text") {
+    openColorPicker = openColorPicker === kind ? null : kind;
+  }
+
+  function applyColorSelection(
+    kind: "border" | "fill" | "text",
+    color: string,
+  ) {
+    if (kind === "border") {
+      controller.setSelectedBorderColor(color);
+    } else if (kind === "fill") {
+      controller.setSelectedFillColor(color);
+    } else {
+      controller.setSelectedTextColor(color);
+    }
+    openColorPicker = null;
+  }
+
+  function applyCustomColor(kind: "border" | "fill" | "text", event: Event) {
+    const value = (event.currentTarget as HTMLInputElement).value;
+    if (kind === "border") {
+      controller.setSelectedBorderColor(value);
+    } else if (kind === "fill") {
+      controller.setSelectedFillColor(value);
+    } else {
+      controller.setSelectedTextColor(value);
+    }
+  }
+
+  function handleGlobalClick(event: MouseEvent) {
+    if (!openColorPicker) {
+      return;
+    }
+
+    if (!(event.target instanceof Element)) {
+      openColorPicker = null;
+      return;
+    }
+
+    if (event.target.closest(".color-picker-host")) {
+      return;
+    }
+
+    openColorPicker = null;
+  }
 
   function getTextMeasureContext(): CanvasRenderingContext2D | null {
     if (textMeasureContext !== undefined) {
@@ -319,6 +404,11 @@
   }
 
   function handleKeydown(event: KeyboardEvent) {
+    if (event.key === "Escape" && openColorPicker) {
+      openColorPicker = null;
+      return;
+    }
+
     if (event.key === "Escape" && interactiveVideoId) {
       interactiveVideoId = null;
       return;
@@ -372,6 +462,7 @@
 
     window.addEventListener("keydown", handleKeydown);
     window.addEventListener("paste", handlePaste);
+    window.addEventListener("click", handleGlobalClick);
 
     if (boardId) {
       void loadBoardFromServer(boardId);
@@ -390,6 +481,7 @@
       void persistBoardIfChanged();
       window.removeEventListener("keydown", handleKeydown);
       window.removeEventListener("paste", handlePaste);
+      window.removeEventListener("click", handleGlobalClick);
     };
   });
 
@@ -542,6 +634,7 @@
     if (
       !style.controls.fillColor &&
       !style.controls.borderColor &&
+      !style.controls.textColor &&
       !style.controls.textAlign &&
       !style.controls.fontSize
     ) {
@@ -593,8 +686,11 @@
     $board;
     $viewport;
     $selectedElementIds;
-    selectedOverlay = getSelectedOverlayState();
-    selectedVideoControl = getSelectedVideoControlState();
+    const nextSelectedOverlay = getSelectedOverlayState();
+    const nextSelectedVideoControl = getSelectedVideoControlState();
+
+    selectedOverlay = nextSelectedOverlay;
+    selectedVideoControl = nextSelectedVideoControl;
     layerItems = controller.getLayerItems();
     videoOverlays = getVideoOverlayItems();
 
@@ -604,6 +700,10 @@
       !$selectedElementIds.has(interactiveVideoId)
     ) {
       interactiveVideoId = null;
+    }
+
+    if (!nextSelectedOverlay && openColorPicker !== null) {
+      openColorPicker = null;
     }
   });
 
@@ -927,34 +1027,160 @@
       {/if}
 
       {#if selectedOverlay.style.controls.borderColor && selectedOverlay.style.borderColor}
-        <div class="mini-group">
-          {#each borderSwatches as color}
-            <button
-              type="button"
-              class="swatch"
-              class:transparent-swatch={color === "transparent"}
-              class:active={selectedOverlay.style.borderColor === color}
-              style:background={color}
-              title={`Border ${color}`}
-              onclick={() => controller.setSelectedBorderColor(color)}
-            ></button>
-          {/each}
+        <div class="mini-group color-picker-host">
+          <button
+            type="button"
+            class="color-trigger"
+            class:active={openColorPicker === "border"}
+            aria-label="Border color"
+            title="Border color"
+            onclick={() => toggleColorPicker("border")}
+          >
+            <Icon icon={squareIcon} width="14" height="14" />
+          </button>
+
+          {#if openColorPicker === "border"}
+            <div class="color-popup">
+              <div class="color-grid">
+                {#each borderSwatches as color}
+                  <button
+                    type="button"
+                    class="swatch"
+                    class:transparent-swatch={color === "transparent"}
+                    class:active={selectedOverlay.style.borderColor === color}
+                    style:background={color}
+                    title={`Border ${color}`}
+                    onclick={() => applyColorSelection("border", color)}
+                  ></button>
+                {/each}
+              </div>
+              <div class="color-custom-row">
+                <span>Custom</span>
+                <label
+                  class="swatch swatch-picker"
+                  class:active={isCustomColorSelected(
+                    selectedOverlay.style.borderColor,
+                    borderSwatches,
+                  )}
+                  title="Custom border color"
+                >
+                  <input
+                    type="color"
+                    value={getColorPickerValue(
+                      selectedOverlay.style.borderColor,
+                      defaultBorderPickerColor,
+                    )}
+                    oninput={(event) => applyCustomColor("border", event)}
+                  />
+                </label>
+              </div>
+            </div>
+          {/if}
         </div>
       {/if}
 
       {#if selectedOverlay.style.controls.fillColor && selectedOverlay.style.fillColor}
-        <div class="mini-group">
-          {#each fillSwatches as color}
-            <button
-              type="button"
-              class="swatch"
-              class:transparent-swatch={color === "transparent"}
-              class:active={selectedOverlay.style.fillColor === color}
-              style:background={color}
-              title={`Background ${color}`}
-              onclick={() => controller.setSelectedFillColor(color)}
-            ></button>
-          {/each}
+        <div class="mini-group color-picker-host">
+          <button
+            type="button"
+            class="color-trigger"
+            class:active={openColorPicker === "fill"}
+            aria-label="Background color"
+            title="Background color"
+            onclick={() => toggleColorPicker("fill")}
+          >
+            <Icon icon={paintBucketIcon} width="14" height="14" />
+          </button>
+
+          {#if openColorPicker === "fill"}
+            <div class="color-popup">
+              <div class="color-grid">
+                {#each fillSwatches as color}
+                  <button
+                    type="button"
+                    class="swatch"
+                    class:transparent-swatch={color === "transparent"}
+                    class:active={selectedOverlay.style.fillColor === color}
+                    style:background={color}
+                    title={`Background ${color}`}
+                    onclick={() => applyColorSelection("fill", color)}
+                  ></button>
+                {/each}
+              </div>
+              <div class="color-custom-row">
+                <span>Custom</span>
+                <label
+                  class="swatch swatch-picker"
+                  class:active={isCustomColorSelected(
+                    selectedOverlay.style.fillColor,
+                    fillSwatches,
+                  )}
+                  title="Custom background color"
+                >
+                  <input
+                    type="color"
+                    value={getColorPickerValue(
+                      selectedOverlay.style.fillColor,
+                      defaultFillPickerColor,
+                    )}
+                    oninput={(event) => applyCustomColor("fill", event)}
+                  />
+                </label>
+              </div>
+            </div>
+          {/if}
+        </div>
+      {/if}
+
+      {#if selectedOverlay.style.controls.textColor && selectedOverlay.style.textColor}
+        <div class="mini-group color-picker-host">
+          <button
+            type="button"
+            class="color-trigger"
+            class:active={openColorPicker === "text"}
+            aria-label="Text color"
+            title="Text color"
+            onclick={() => toggleColorPicker("text")}
+          >
+            <Icon icon={typeIcon} width="14" height="14" />
+          </button>
+
+          {#if openColorPicker === "text"}
+            <div class="color-popup">
+              <div class="color-grid">
+                {#each textSwatches as color}
+                  <button
+                    type="button"
+                    class="swatch"
+                    class:active={selectedOverlay.style.textColor === color}
+                    style:background={color}
+                    title={`Text ${color}`}
+                    onclick={() => applyColorSelection("text", color)}
+                  ></button>
+                {/each}
+              </div>
+              <div class="color-custom-row">
+                <span>Custom</span>
+                <label
+                  class="swatch swatch-picker"
+                  class:active={isCustomColorSelected(
+                    selectedOverlay.style.textColor,
+                    textSwatches,
+                  )}
+                  title="Custom text color"
+                >
+                  <input
+                    type="color"
+                    value={getColorPickerValue(
+                      selectedOverlay.style.textColor,
+                      defaultTextPickerColor,
+                    )}
+                    oninput={(event) => applyCustomColor("text", event)}
+                  />
+                </label>
+              </div>
+            </div>
+          {/if}
         </div>
       {/if}
     </div>
@@ -1274,11 +1500,108 @@
     outline-offset: 1px;
   }
 
+  .color-picker-host {
+    position: relative;
+  }
+
+  .color-trigger {
+    min-width: 30px;
+    height: 30px;
+    padding: 0;
+    gap: 0;
+  }
+
+  .color-popup {
+    position: absolute;
+    left: 0;
+    top: calc(100% + 8px);
+    z-index: 70;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+    border-radius: 10px;
+    border: 1px solid var(--border-1);
+    background: var(--surface-1);
+    box-shadow: var(--shadow-m);
+  }
+
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+
+  .color-grid .swatch {
+    min-width: 22px;
+    height: 22px;
+  }
+
+  .color-custom-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    color: var(--app-text-muted);
+    font-size: 11px;
+  }
+
   .swatch {
     width: 22px;
     min-width: 22px;
     height: 22px;
     padding: 0;
+  }
+
+  .swatch-picker {
+    border: 1px solid var(--border-1);
+    border-radius: 6px;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--button-bg);
+    cursor: pointer;
+  }
+
+  .swatch-picker:hover {
+    border-color: var(--border-2);
+    background: var(--button-bg-hover);
+  }
+
+  .swatch-picker.active {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .swatch-picker:focus-within {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .swatch-picker input[type="color"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    height: 100%;
+    border: none;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .swatch-picker input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+  }
+
+  .swatch-picker input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 5px;
+  }
+
+  .swatch-picker input[type="color"]::-moz-color-swatch {
+    border: none;
+    border-radius: 5px;
   }
 
   .transparent-swatch {

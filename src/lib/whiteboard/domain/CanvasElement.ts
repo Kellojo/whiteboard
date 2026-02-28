@@ -3,6 +3,7 @@ import type { CanvasElementJSON, Point } from "./types";
 export interface StyleControlOptions {
   fillColor: boolean;
   borderColor: boolean;
+  textColor: boolean;
   textAlign: boolean;
   fontSize: boolean;
 }
@@ -45,6 +46,7 @@ export abstract class CanvasElement {
     return {
       fillColor: typeof element.fillColor === "string",
       borderColor: typeof element.borderColor === "string",
+      textColor: typeof element.textColor === "string",
       textAlign:
         textAlignValue === "left" ||
         textAlignValue === "center" ||

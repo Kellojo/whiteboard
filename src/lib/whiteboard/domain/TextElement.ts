@@ -6,6 +6,7 @@ export class TextElement extends CanvasElement {
   fontSize: number;
   fillColor: string;
   borderColor: string;
+  textColor: string;
   textAlign: TextAlign;
 
   constructor(
@@ -14,6 +15,7 @@ export class TextElement extends CanvasElement {
       fontSize?: number;
       fillColor?: string;
       borderColor?: string;
+      textColor?: string;
       textAlign?: TextAlign;
     },
   ) {
@@ -22,6 +24,7 @@ export class TextElement extends CanvasElement {
     this.fontSize = params.fontSize ?? 18;
     this.fillColor = params.fillColor ?? "#ffffff";
     this.borderColor = params.borderColor ?? "#6b7280";
+    this.textColor = params.textColor ?? "#111827";
     this.textAlign = params.textAlign ?? "left";
   }
 
@@ -34,7 +37,7 @@ export class TextElement extends CanvasElement {
     ctx.strokeRect(this.x, this.y, this.width, this.height);
 
     ctx.font = `${this.fontSize}px Inter, system-ui, sans-serif`;
-    ctx.fillStyle = "#111827";
+    ctx.fillStyle = this.textColor;
     ctx.textBaseline = "top";
     ctx.textAlign = this.textAlign;
     const textX =
@@ -80,6 +83,7 @@ export class TextElement extends CanvasElement {
       fontSize: this.fontSize,
       fillColor: this.fillColor,
       borderColor: this.borderColor,
+      textColor: this.textColor,
       textAlign: this.textAlign,
     };
   }

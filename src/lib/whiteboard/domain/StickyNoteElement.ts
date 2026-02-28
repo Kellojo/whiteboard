@@ -6,6 +6,7 @@ export class StickyNoteElement extends CanvasElement {
   fontSize: number;
   fillColor: string;
   borderColor: string;
+  textColor: string;
   textAlign: TextAlign;
 
   constructor(
@@ -14,6 +15,7 @@ export class StickyNoteElement extends CanvasElement {
       fontSize?: number;
       fillColor?: string;
       borderColor?: string;
+      textColor?: string;
       textAlign?: TextAlign;
     },
   ) {
@@ -22,6 +24,7 @@ export class StickyNoteElement extends CanvasElement {
     this.fontSize = params.fontSize ?? 16;
     this.fillColor = params.fillColor ?? "#fef08a";
     this.borderColor = params.borderColor ?? "#854d0e";
+    this.textColor = params.textColor ?? "#1f2937";
     this.textAlign = "center";
   }
 
@@ -38,7 +41,7 @@ export class StickyNoteElement extends CanvasElement {
       ctx.strokeRect(this.x, this.y, this.width, this.height);
     }
 
-    ctx.fillStyle = "#1f2937";
+    ctx.fillStyle = this.textColor;
     ctx.font = `${this.fontSize}px Inter, system-ui, sans-serif`;
     ctx.textBaseline = "top";
     ctx.textAlign = "center";
@@ -86,6 +89,7 @@ export class StickyNoteElement extends CanvasElement {
       fontSize: this.fontSize,
       fillColor: this.fillColor,
       borderColor: this.borderColor,
+      textColor: this.textColor,
       textAlign: this.textAlign,
     };
   }
