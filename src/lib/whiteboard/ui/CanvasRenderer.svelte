@@ -30,6 +30,9 @@
   let lastClickPoint: Point | null = null;
 
   const handleSize = 10;
+  const MIN_GRID_SPACING_PX = 24;
+  const MAX_GRID_SPACING_PX = 64;
+  const MINOR_GRID_MIN_SPACING_PX = 18;
 
   function getThemeColor(variableName: string, fallback: string): string {
     const value = getComputedStyle(document.documentElement)
@@ -125,38 +128,73 @@
   }
 
   function drawBackgroundGrid(ctx: CanvasRenderingContext2D) {
-    const spacing = 40 * viewport.zoom;
-    if (spacing < 14) {
-      return;
-    }
+    const majorStepWorld = getAdaptiveGridStep(viewport.zoom);
+    const majorSpacing = majorStepWorld * viewport.zoom;
+
+    const minorStepWorld = majorStepWorld / 4;
+    const minorSpacing = minorStepWorld * viewport.zoom;
+    const showMinorGrid = minorSpacing >= MINOR_GRID_MIN_SPACING_PX;
 
     ctx.save();
-    ctx.strokeStyle = getThemeColor("--canvas-grid", "#f3f4f6");
+    const gridColor = getThemeColor("--canvas-grid", "#f3f4f6");
+    ctx.strokeStyle = gridColor;
     ctx.lineWidth = 1;
 
-    for (
-      let x = (viewport.offsetX * viewport.zoom) % spacing;
-      x < canvas.width;
-      x += spacing
-    ) {
+    if (showMinorGrid) {
+      ctx.globalAlpha = 0.35;
+      drawGridLines(ctx, minorSpacing);
+    }
+
+    ctx.globalAlpha = 0.85;
+    drawGridLines(ctx, majorSpacing);
+
+    ctx.restore();
+  }
+
+  function drawGridLines(ctx: CanvasRenderingContext2D, spacing: number) {
+    const offsetX = viewport.offsetX * viewport.zoom;
+    const offsetY = viewport.offsetY * viewport.zoom;
+    const startX = normalizedModulo(offsetX, spacing);
+    const startY = normalizedModulo(offsetY, spacing);
+
+    for (let x = startX; x < canvas.width; x += spacing) {
       ctx.beginPath();
       ctx.moveTo(x, 0);
       ctx.lineTo(x, canvas.height);
       ctx.stroke();
     }
 
-    for (
-      let y = (viewport.offsetY * viewport.zoom) % spacing;
-      y < canvas.height;
-      y += spacing
-    ) {
+    for (let y = startY; y < canvas.height; y += spacing) {
       ctx.beginPath();
       ctx.moveTo(0, y);
       ctx.lineTo(canvas.width, y);
       ctx.stroke();
     }
+  }
 
-    ctx.restore();
+  function getAdaptiveGridStep(zoom: number): number {
+    const safeZoom = Math.max(0.0001, zoom);
+    const targetSpacing = (MIN_GRID_SPACING_PX + MAX_GRID_SPACING_PX) / 2;
+    const targetStep = targetSpacing / safeZoom;
+    const baseExponent = Math.round(Math.log2(Math.max(targetStep, 2 ** -16)));
+    let step = 2 ** baseExponent;
+    let spacing = step * safeZoom;
+
+    while (spacing < MIN_GRID_SPACING_PX) {
+      step *= 2;
+      spacing = step * safeZoom;
+    }
+
+    while (spacing > MAX_GRID_SPACING_PX) {
+      step /= 2;
+      spacing = step * safeZoom;
+    }
+
+    return step;
+  }
+
+  function normalizedModulo(value: number, divisor: number): number {
+    return ((value % divisor) + divisor) % divisor;
   }
 
   function resizeCanvasIfNeeded() {
