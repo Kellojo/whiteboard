@@ -22,8 +22,8 @@ Whiteboards with shapes, sticky notes, text, images and icons. Deployable as a s
 
 ## 🚫 Currently does not support
 
-- 🤝 Real time collaboration (not planned for the foreseeable future)
-- 🔐 User accounts and permissions (ideally, put this behind a reverse proxy with authentication)
+- Real time collaboration (not planned for the foreseeable future)
+- User accounts and permissions (ideally, put this behind a reverse proxy with authentication)
 
 ## 🏠 Self-hosting
 
@@ -53,11 +53,11 @@ Contributions are very welcome! If you want to contribute, please open an issue 
 
 Things that would be nice to have:
 
-- 🔺 More shapes (e.g. circles, arrows, ...)
-- ✍️ More text formatting options (e.g. italic, underline, ...)
-- 🖼️ More image editing options (e.g. cropping, rotating, ...)
-- 🧭 Favicon and app icon
-- 📱 Better support for mobile and touch devices
+- More shapes (e.g. circles, arrows, ...)
+- More text formatting options (e.g. italic, underline, ...)
+- More image editing options (e.g. cropping, rotating, ...)
+- Favicon and app icon
+- Better support for mobile and touch devices
 
 ### 🛠️ Developing
 
