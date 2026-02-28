@@ -1,4 +1,4 @@
-# 🧠 Simple Whiteboard
+# Simple Whiteboard
 
 Whiteboards with shapes, sticky notes, text, images and icons. Deployable as a simple docker container in your homelab. Includes support for multiple boards and import/export of individual boards.
 
