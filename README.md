@@ -2,11 +2,18 @@
 
 Whiteboards with shapes, sticky notes, text, images and icons. Deployable as a simple docker container in your homelab. Includes support for multiple boards and import/export of individual boards.
 
+![Screenshot of the whiteboard app, showing a board with various shapes, sticky notes, text and icons](./docs/canvas.png.png)
+
+![Screenshot of the whiteboard app's toolbar, showing various tools for drawing shapes, adding text and icons, and managing boards](./docs/board%20overview.png)
+
 ## ✨ Features
 
 - 🟦 Draw shapes, add sticky notes, text, images and icons
-- 📋 Copy/paste and drag/drop support for images
+- 🖼️ Copy/paste and drag/drop support for images
 - 🎨 Customizable text color, font weight, alignment, ...
+- 🧩 Custom icon browser with 1000+ icons from [lucide icons](https://github.com/lucide-icons/lucide)
+- 🗄️ Layer system for easy organization of elements (bring to front/send to back, move up/down)
+- ▶️ Embedd YouTube videos by pasting the video URL
 - 🗂️ Manage multiple boards
 - 🔗 Share links to specific boards
 - 📦 Import/export individual boards as JSON files
