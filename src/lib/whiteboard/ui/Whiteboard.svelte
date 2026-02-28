@@ -1,29 +1,24 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import minusIcon from "@iconify-icons/lucide/minus";
-  import plusIcon from "@iconify-icons/lucide/plus";
-  import alignLeftIcon from "@iconify-icons/lucide/align-left";
-  import alignCenterIcon from "@iconify-icons/lucide/align-center";
-  import alignRightIcon from "@iconify-icons/lucide/align-right";
   import arrowUpIcon from "@iconify-icons/lucide/arrow-up";
   import arrowDownIcon from "@iconify-icons/lucide/arrow-down";
   import chevronsUpIcon from "@iconify-icons/lucide/chevrons-up";
   import chevronsDownIcon from "@iconify-icons/lucide/chevrons-down";
-  import playIcon from "@iconify-icons/lucide/play";
-  import squareIcon from "@iconify-icons/lucide/square";
-  import paintBucketIcon from "@iconify-icons/lucide/paint-bucket";
-  import typeIcon from "@iconify-icons/lucide/type";
   import { flip } from "svelte/animate";
   import { get } from "svelte/store";
   import { onMount, tick } from "svelte";
   import { fade } from "svelte/transition";
   import type { BoardJSON } from "../domain/Board";
   import { BoardController } from "../application/BoardController";
+  import type { EditableTextTarget } from "../application/BoardController";
   import { SerializationService } from "../application/SerializationService";
   import { VideoElement } from "../domain/VideoElement";
-  import type { CanvasElementJSON, Point, TextAlign } from "../domain/types";
+  import type { CanvasElementJSON, Point } from "../domain/types";
   import { board, selectedElementIds, viewport } from "../stores";
   import CanvasRenderer from "./CanvasRenderer.svelte";
+  import InlineTextEditor from "./InlineTextEditor.svelte";
+  import SelectedOverlay from "./SelectedOverlay.svelte";
+  import VideoModeToolbar from "./VideoModeToolbar.svelte";
   import Toolbar, { type CreateKind } from "./Toolbar.svelte";
 
   let { boardId = null }: { boardId?: string | null } = $props();
@@ -44,36 +39,7 @@
     y: number;
     style: NonNullable<ReturnType<BoardController["getSelectedStyleState"]>>;
   } | null>(null);
-  let textEditor = $state<{
-    id: string;
-    text: string;
-    kind: "text" | "sticky";
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    fontSize: number;
-    fillColor: string;
-    borderColor: string;
-    textColor: string;
-    textAlign: TextAlign;
-  } | null>(null);
-  let textEditorRef = $state<HTMLTextAreaElement | null>(null);
-  let textEditorStyle = $state<{
-    left: number;
-    top: number;
-    width: number;
-    height: number;
-    fontSize: number;
-    textAlign: TextAlign;
-    color: string;
-    background: string;
-    borderColor: string;
-    borderWidth: number;
-    paddingX: number;
-    paddingTop: number;
-    lineHeight: number;
-  } | null>(null);
+  let textEditor = $state<EditableTextTarget | null>(null);
   let layerItems = $state<ReturnType<BoardController["getLayerItems"]>>([]);
   let videoOverlays = $state<
     {
@@ -94,170 +60,6 @@
     y: number;
     interactive: boolean;
   } | null>(null);
-  let openColorPicker = $state<"border" | "fill" | "text" | null>(null);
-
-  const fillSwatches = [
-    "transparent",
-    "#ffffff",
-    "#fef08a",
-    "#dbeafe",
-    "#dcfce7",
-    "#fee2e2",
-    "#f5f3ff",
-  ];
-
-  const borderSwatches = [
-    "transparent",
-    "#111827",
-    "#374151",
-    "#2563eb",
-    "#16a34a",
-    "#ca8a04",
-    "#dc2626",
-  ];
-
-  const textSwatches = [
-    "#111827",
-    "#1f2937",
-    "#374151",
-    "#2563eb",
-    "#16a34a",
-    "#ca8a04",
-    "#dc2626",
-    "#ffffff",
-  ];
-
-  const textAlignOptions = [
-    { label: "Align left", icon: alignLeftIcon, value: "left" },
-    { label: "Align center", icon: alignCenterIcon, value: "center" },
-    { label: "Align right", icon: alignRightIcon, value: "right" },
-  ] satisfies { label: string; icon: object; value: TextAlign }[];
-  const HEX_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
-  const defaultBorderPickerColor = "#111827";
-  const defaultFillPickerColor = "#ffffff";
-  const defaultTextPickerColor = "#111827";
-  const inlineEditorFontCalibration = 0.98;
-  let textMeasureContext: CanvasRenderingContext2D | null | undefined;
-
-  function getColorPickerValue(
-    color: string | null | undefined,
-    fallback: string,
-  ): string {
-    if (typeof color === "string" && HEX_COLOR_PATTERN.test(color)) {
-      return color;
-    }
-    return fallback;
-  }
-
-  function isCustomColorSelected(
-    color: string | null | undefined,
-    swatches: string[],
-  ): boolean {
-    if (typeof color !== "string") {
-      return false;
-    }
-    const normalizedSwatches = swatches.map((value) => value.toLowerCase());
-    return !normalizedSwatches.includes(color.toLowerCase());
-  }
-
-  function toggleColorPicker(kind: "border" | "fill" | "text") {
-    openColorPicker = openColorPicker === kind ? null : kind;
-  }
-
-  function applyColorSelection(
-    kind: "border" | "fill" | "text",
-    color: string,
-  ) {
-    if (kind === "border") {
-      controller.setSelectedBorderColor(color);
-    } else if (kind === "fill") {
-      controller.setSelectedFillColor(color);
-    } else {
-      controller.setSelectedTextColor(color);
-    }
-    openColorPicker = null;
-  }
-
-  function applyCustomColor(kind: "border" | "fill" | "text", event: Event) {
-    const value = (event.currentTarget as HTMLInputElement).value;
-    if (kind === "border") {
-      controller.setSelectedBorderColor(value);
-    } else if (kind === "fill") {
-      controller.setSelectedFillColor(value);
-    } else {
-      controller.setSelectedTextColor(value);
-    }
-  }
-
-  function handleGlobalClick(event: MouseEvent) {
-    if (!openColorPicker) {
-      return;
-    }
-
-    if (!(event.target instanceof Element)) {
-      openColorPicker = null;
-      return;
-    }
-
-    if (event.target.closest(".color-picker-host")) {
-      return;
-    }
-
-    openColorPicker = null;
-  }
-
-  function getTextMeasureContext(): CanvasRenderingContext2D | null {
-    if (textMeasureContext !== undefined) {
-      return textMeasureContext;
-    }
-    if (typeof document === "undefined") {
-      textMeasureContext = null;
-      return textMeasureContext;
-    }
-    textMeasureContext = document.createElement("canvas").getContext("2d");
-    return textMeasureContext;
-  }
-
-  function measureWrappedLineCount(
-    text: string,
-    fontSize: number,
-    maxWidth: number,
-  ): number {
-    const context = getTextMeasureContext();
-    if (!context || maxWidth <= 0) {
-      return Math.max(1, text.split("\n").length);
-    }
-
-    context.font = `${fontSize}px Inter, system-ui, sans-serif`;
-    const paragraphs = text.split("\n");
-    let lineCount = 0;
-
-    for (const paragraph of paragraphs) {
-      if (!paragraph.length) {
-        lineCount += 1;
-        continue;
-      }
-
-      const words = paragraph.split(" ");
-      let line = "";
-
-      for (const word of words) {
-        const candidate = line ? `${line} ${word}` : word;
-        if (context.measureText(candidate).width <= maxWidth) {
-          line = candidate;
-        } else {
-          if (line) {
-            lineCount += 1;
-          }
-          line = word;
-        }
-      }
-
-      lineCount += line ? 1 : 0;
-    }
-
-    return Math.max(1, lineCount);
-  }
 
   function handleCursorWorldChange(point: Point) {
     cursorWorld = point;
@@ -404,11 +206,6 @@
   }
 
   function handleKeydown(event: KeyboardEvent) {
-    if (event.key === "Escape" && openColorPicker) {
-      openColorPicker = null;
-      return;
-    }
-
     if (event.key === "Escape" && interactiveVideoId) {
       interactiveVideoId = null;
       return;
@@ -439,6 +236,11 @@
   }
 
   onMount(() => {
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
     const unsubscribeBoard = board.subscribe(() => {
       if (hasLoadedRemoteBoard) {
         queueAutosave();
@@ -462,7 +264,6 @@
 
     window.addEventListener("keydown", handleKeydown);
     window.addEventListener("paste", handlePaste);
-    window.addEventListener("click", handleGlobalClick);
 
     if (boardId) {
       void loadBoardFromServer(boardId);
@@ -479,9 +280,10 @@
         commitTextEditor();
       }
       void persistBoardIfChanged();
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
       window.removeEventListener("keydown", handleKeydown);
       window.removeEventListener("paste", handlePaste);
-      window.removeEventListener("click", handleGlobalClick);
     };
   });
 
@@ -701,10 +503,6 @@
     ) {
       interactiveVideoId = null;
     }
-
-    if (!nextSelectedOverlay && openColorPicker !== null) {
-      openColorPicker = null;
-    }
   });
 
   function handleCanvasDoubleClick(worldPoint: Point) {
@@ -750,70 +548,16 @@
     textEditor = null;
   }
 
-  function getTextEditorStyle() {
+  function updateTextEditorText(text: string) {
     if (!textEditor) {
-      return null;
+      return;
     }
 
-    const dpr = window.devicePixelRatio || 1;
-    const scale = $viewport.zoom / dpr;
-    const borderWidth = Math.max(1, scale);
-    const calibratedFontSize =
-      Math.max(1, Number(textEditor.fontSize) * scale) *
-      inlineEditorFontCalibration;
-    const lineHeight = calibratedFontSize * 1.3;
-    const leadingCompensation = (lineHeight - calibratedFontSize) / 2;
-    const width = Math.max(24, textEditor.width * scale);
-    const height = Math.max(24, textEditor.height * scale);
-    const paddingX = Math.max(0, 8 * scale - borderWidth);
-    const defaultPaddingTop = Math.max(
-      0,
-      (textEditor.kind === "sticky" ? 8 : 6) * scale -
-        borderWidth -
-        leadingCompensation,
-    );
-
-    let paddingTop = defaultPaddingTop;
-    if (textEditor.kind === "sticky") {
-      const maxTextWidth = Math.max(0, width - borderWidth * 2 - paddingX * 2);
-      const lineCount = measureWrappedLineCount(
-        textEditor.text,
-        calibratedFontSize,
-        maxTextWidth,
-      );
-      const innerHeight = Math.max(0, height - borderWidth * 2);
-      const totalTextHeight = lineCount * lineHeight;
-      paddingTop = Math.max(
-        0,
-        (innerHeight - totalTextHeight) / 2 - leadingCompensation,
-      );
-    }
-
-    return {
-      left: (textEditor.x + $viewport.offsetX) * scale,
-      top: (textEditor.y + $viewport.offsetY) * scale,
-      width,
-      height,
-      fontSize: calibratedFontSize,
-      textAlign: textEditor.textAlign,
-      color: textEditor.textColor,
-      background: textEditor.fillColor,
-      borderColor: textEditor.borderColor,
-      borderWidth,
-      paddingX,
-      paddingTop,
-      lineHeight,
+    textEditor = {
+      ...textEditor,
+      text,
     };
   }
-
-  $effect(() => {
-    textEditorStyle = textEditor ? getTextEditorStyle() : null;
-    if (textEditor) {
-      tick().then(() => {
-        textEditorRef?.focus();
-      });
-    }
-  });
 </script>
 
 <section class="whiteboard-shell">
@@ -945,270 +689,24 @@
   {/if}
 
   {#if textEditor}
-    <textarea
-      bind:this={textEditorRef}
-      class="inline-text-editor"
-      style:left={`${textEditorStyle?.left ?? 24}px`}
-      style:top={`${textEditorStyle?.top ?? 24}px`}
-      style:width={`${textEditorStyle?.width ?? 220}px`}
-      style:height={`${textEditorStyle?.height ?? 100}px`}
-      style:font-size={`${textEditorStyle?.fontSize ?? 16}px`}
-      style:text-align={textEditorStyle?.textAlign ?? "left"}
-      style:color={textEditorStyle?.color ?? "var(--app-text)"}
-      style:background={textEditorStyle?.background ?? "var(--surface-1)"}
-      style:border-color={textEditorStyle?.borderColor ?? "var(--border-2)"}
-      style:border-width={`${textEditorStyle?.borderWidth ?? 1}px`}
-      style:padding-left={`${textEditorStyle?.paddingX ?? 8}px`}
-      style:padding-right={`${textEditorStyle?.paddingX ?? 8}px`}
-      style:padding-top={`${textEditorStyle?.paddingTop ?? 6}px`}
-      style:line-height={`${textEditorStyle?.lineHeight ?? 20.8}px`}
-      bind:value={textEditor.text}
-      onblur={commitTextEditor}
-      onkeydown={(event) => {
-        if (event.key === "Escape") {
-          event.preventDefault();
-          cancelTextEditor();
-          return;
-        }
-
-        if (
-          event.key === "Enter" &&
-          (event.ctrlKey || event.metaKey) &&
-          !event.shiftKey
-        ) {
-          event.preventDefault();
-          commitTextEditor();
-        }
-      }}
-    ></textarea>
+    <InlineTextEditor
+      editor={textEditor}
+      viewport={$viewport}
+      onChange={updateTextEditorText}
+      onCommit={commitTextEditor}
+      onCancel={cancelTextEditor}
+    />
   {/if}
 
   {#if selectedOverlay}
-    <div
-      class="selected-toolbar"
-      style:left={`${selectedOverlay.x}px`}
-      style:top={`${selectedOverlay.y}px`}
-    >
-      {#if selectedOverlay.style.controls.fontSize && selectedOverlay.style.fontSize !== null}
-        <div class="mini-group font-size-group">
-          <button
-            type="button"
-            disabled={!selectedOverlay.style.canDecreaseFontSize}
-            title="Decrease font size"
-            onclick={() => controller.decreaseSelectedFontSize()}
-          >
-            <Icon icon={minusIcon} width="16" height="16" />
-          </button>
-          <span class="font-size-value">{selectedOverlay.style.fontSize}</span>
-          <button
-            type="button"
-            disabled={!selectedOverlay.style.canIncreaseFontSize}
-            title="Increase font size"
-            onclick={() => controller.increaseSelectedFontSize()}
-          >
-            <Icon icon={plusIcon} width="16" height="16" />
-          </button>
-        </div>
-      {/if}
-
-      {#if selectedOverlay.style.controls.textAlign && selectedOverlay.style.textAlign}
-        <div class="mini-group">
-          {#each textAlignOptions as option}
-            <button
-              type="button"
-              title={option.label}
-              class:active={selectedOverlay.style.textAlign === option.value}
-              onclick={() => controller.setSelectedTextAlign(option.value)}
-            >
-              <Icon icon={option.icon} width="16" height="16" />
-            </button>
-          {/each}
-        </div>
-      {/if}
-
-      {#if selectedOverlay.style.controls.borderColor && selectedOverlay.style.borderColor}
-        <div class="mini-group color-picker-host">
-          <button
-            type="button"
-            class="color-trigger"
-            class:active={openColorPicker === "border"}
-            aria-label="Border color"
-            title="Border color"
-            onclick={() => toggleColorPicker("border")}
-          >
-            <Icon icon={squareIcon} width="14" height="14" />
-          </button>
-
-          {#if openColorPicker === "border"}
-            <div class="color-popup">
-              <div class="color-grid">
-                {#each borderSwatches as color}
-                  <button
-                    type="button"
-                    class="swatch"
-                    class:transparent-swatch={color === "transparent"}
-                    class:active={selectedOverlay.style.borderColor === color}
-                    style:background={color}
-                    title={`Border ${color}`}
-                    onclick={() => applyColorSelection("border", color)}
-                  ></button>
-                {/each}
-              </div>
-              <div class="color-custom-row">
-                <span>Custom</span>
-                <label
-                  class="swatch swatch-picker"
-                  class:active={isCustomColorSelected(
-                    selectedOverlay.style.borderColor,
-                    borderSwatches,
-                  )}
-                  title="Custom border color"
-                >
-                  <input
-                    type="color"
-                    value={getColorPickerValue(
-                      selectedOverlay.style.borderColor,
-                      defaultBorderPickerColor,
-                    )}
-                    oninput={(event) => applyCustomColor("border", event)}
-                  />
-                </label>
-              </div>
-            </div>
-          {/if}
-        </div>
-      {/if}
-
-      {#if selectedOverlay.style.controls.fillColor && selectedOverlay.style.fillColor}
-        <div class="mini-group color-picker-host">
-          <button
-            type="button"
-            class="color-trigger"
-            class:active={openColorPicker === "fill"}
-            aria-label="Background color"
-            title="Background color"
-            onclick={() => toggleColorPicker("fill")}
-          >
-            <Icon icon={paintBucketIcon} width="14" height="14" />
-          </button>
-
-          {#if openColorPicker === "fill"}
-            <div class="color-popup">
-              <div class="color-grid">
-                {#each fillSwatches as color}
-                  <button
-                    type="button"
-                    class="swatch"
-                    class:transparent-swatch={color === "transparent"}
-                    class:active={selectedOverlay.style.fillColor === color}
-                    style:background={color}
-                    title={`Background ${color}`}
-                    onclick={() => applyColorSelection("fill", color)}
-                  ></button>
-                {/each}
-              </div>
-              <div class="color-custom-row">
-                <span>Custom</span>
-                <label
-                  class="swatch swatch-picker"
-                  class:active={isCustomColorSelected(
-                    selectedOverlay.style.fillColor,
-                    fillSwatches,
-                  )}
-                  title="Custom background color"
-                >
-                  <input
-                    type="color"
-                    value={getColorPickerValue(
-                      selectedOverlay.style.fillColor,
-                      defaultFillPickerColor,
-                    )}
-                    oninput={(event) => applyCustomColor("fill", event)}
-                  />
-                </label>
-              </div>
-            </div>
-          {/if}
-        </div>
-      {/if}
-
-      {#if selectedOverlay.style.controls.textColor && selectedOverlay.style.textColor}
-        <div class="mini-group color-picker-host">
-          <button
-            type="button"
-            class="color-trigger"
-            class:active={openColorPicker === "text"}
-            aria-label="Text color"
-            title="Text color"
-            onclick={() => toggleColorPicker("text")}
-          >
-            <Icon icon={typeIcon} width="14" height="14" />
-          </button>
-
-          {#if openColorPicker === "text"}
-            <div class="color-popup">
-              <div class="color-grid">
-                {#each textSwatches as color}
-                  <button
-                    type="button"
-                    class="swatch"
-                    class:active={selectedOverlay.style.textColor === color}
-                    style:background={color}
-                    title={`Text ${color}`}
-                    onclick={() => applyColorSelection("text", color)}
-                  ></button>
-                {/each}
-              </div>
-              <div class="color-custom-row">
-                <span>Custom</span>
-                <label
-                  class="swatch swatch-picker"
-                  class:active={isCustomColorSelected(
-                    selectedOverlay.style.textColor,
-                    textSwatches,
-                  )}
-                  title="Custom text color"
-                >
-                  <input
-                    type="color"
-                    value={getColorPickerValue(
-                      selectedOverlay.style.textColor,
-                      defaultTextPickerColor,
-                    )}
-                    oninput={(event) => applyCustomColor("text", event)}
-                  />
-                </label>
-              </div>
-            </div>
-          {/if}
-        </div>
-      {/if}
-    </div>
+    <SelectedOverlay overlay={selectedOverlay} {controller} />
   {/if}
 
   {#if selectedVideoControl}
-    <div
-      class="video-mode-toolbar"
-      style:left={`${selectedVideoControl.x}px`}
-      style:top={`${selectedVideoControl.y}px`}
-    >
-      <button
-        type="button"
-        class:active={selectedVideoControl.interactive}
-        title={selectedVideoControl.interactive
-          ? "Exit play mode"
-          : "Enter play mode"}
-        onclick={() =>
-          selectedVideoControl && toggleVideoPlayMode(selectedVideoControl.id)}
-      >
-        <Icon
-          icon={selectedVideoControl.interactive ? squareIcon : playIcon}
-          width="14"
-          height="14"
-        />
-        {selectedVideoControl.interactive ? "Stop" : "Play"}
-      </button>
-    </div>
+    <VideoModeToolbar
+      control={selectedVideoControl}
+      onToggle={toggleVideoPlayMode}
+    />
   {/if}
 </section>
 
@@ -1394,257 +892,5 @@
 
   .video-overlay.interactive .video-frame {
     pointer-events: auto;
-  }
-
-  .selected-toolbar {
-    position: absolute;
-    transform: translateX(-50%);
-    z-index: 50;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--surface-1);
-    border: 1px solid var(--border-1);
-    border-radius: 10px;
-    padding: 6px;
-    box-shadow: var(--shadow-m);
-  }
-
-  .video-mode-toolbar {
-    position: absolute;
-    transform: translateX(-50%);
-    z-index: 55;
-    display: inline-flex;
-    align-items: center;
-    background: var(--surface-1);
-    border: 1px solid var(--border-1);
-    border-radius: 10px;
-    padding: 6px;
-    box-shadow: var(--shadow-m);
-  }
-
-  .video-mode-toolbar button {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border: 1px solid var(--border-1);
-    background: var(--button-bg);
-    color: var(--button-text);
-    border-radius: 8px;
-    padding: 6px 10px;
-    font-size: 12px;
-    cursor: pointer;
-  }
-
-  .video-mode-toolbar button:hover {
-    background: var(--button-bg-hover);
-    border-color: var(--border-2);
-  }
-
-  .video-mode-toolbar button.active {
-    outline: 2px solid var(--accent);
-    outline-offset: 1px;
-  }
-
-  .mini-group {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding-right: 6px;
-    border-right: 1px solid var(--border-1);
-  }
-
-  .mini-group:last-child {
-    border-right: none;
-    padding-right: 0;
-  }
-
-  .mini-group button {
-    border: 1px solid var(--border-1);
-    background: var(--button-bg);
-    color: var(--button-text);
-    border-radius: 6px;
-    min-width: 30px;
-    height: 30px;
-    font-size: 12px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-  }
-
-  .mini-group button:hover:enabled {
-    background: var(--button-bg-hover);
-    border-color: var(--border-2);
-  }
-
-  .mini-group button:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-
-  .font-size-group {
-    gap: 4px;
-  }
-
-  .font-size-value {
-    min-width: 28px;
-    text-align: center;
-    font-size: 12px;
-    color: var(--app-text-muted);
-  }
-
-  .mini-group button.active {
-    outline: 2px solid var(--accent);
-    outline-offset: 1px;
-  }
-
-  .color-picker-host {
-    position: relative;
-  }
-
-  .color-trigger {
-    min-width: 30px;
-    height: 30px;
-    padding: 0;
-    gap: 0;
-  }
-
-  .color-popup {
-    position: absolute;
-    left: 0;
-    top: calc(100% + 8px);
-    z-index: 70;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 8px;
-    border-radius: 10px;
-    border: 1px solid var(--border-1);
-    background: var(--surface-1);
-    box-shadow: var(--shadow-m);
-  }
-
-  .color-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-  }
-
-  .color-grid .swatch {
-    min-width: 22px;
-    height: 22px;
-  }
-
-  .color-custom-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    color: var(--app-text-muted);
-    font-size: 11px;
-  }
-
-  .swatch {
-    width: 22px;
-    min-width: 22px;
-    height: 22px;
-    padding: 0;
-  }
-
-  .swatch-picker {
-    border: 1px solid var(--border-1);
-    border-radius: 6px;
-    overflow: hidden;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--button-bg);
-    cursor: pointer;
-  }
-
-  .swatch-picker:hover {
-    border-color: var(--border-2);
-    background: var(--button-bg-hover);
-  }
-
-  .swatch-picker.active {
-    outline: 2px solid var(--accent);
-    outline-offset: 1px;
-  }
-
-  .swatch-picker:focus-within {
-    outline: 2px solid var(--accent);
-    outline-offset: 1px;
-  }
-
-  .swatch-picker input[type="color"] {
-    appearance: none;
-    -webkit-appearance: none;
-    width: 100%;
-    height: 100%;
-    border: none;
-    padding: 0;
-    background: transparent;
-    cursor: pointer;
-  }
-
-  .swatch-picker input[type="color"]::-webkit-color-swatch-wrapper {
-    padding: 0;
-  }
-
-  .swatch-picker input[type="color"]::-webkit-color-swatch {
-    border: none;
-    border-radius: 5px;
-  }
-
-  .swatch-picker input[type="color"]::-moz-color-swatch {
-    border: none;
-    border-radius: 5px;
-  }
-
-  .transparent-swatch {
-    position: relative;
-    background-image: linear-gradient(
-        45deg,
-        var(--border-1) 25%,
-        transparent 25%
-      ),
-      linear-gradient(-45deg, var(--border-1) 25%, transparent 25%),
-      linear-gradient(45deg, transparent 75%, var(--border-1) 75%),
-      linear-gradient(-45deg, transparent 75%, var(--border-1) 75%);
-    background-size: 10px 10px;
-    background-position:
-      0 0,
-      0 5px,
-      5px -5px,
-      -5px 0;
-  }
-
-  .transparent-swatch::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 1rem;
-    height: 2px;
-    background: var(--danger);
-    transform: translate(-50%, -50%) rotate(-35deg);
-    border-radius: 999px;
-  }
-
-  .inline-text-editor {
-    position: absolute;
-    z-index: 60;
-    resize: none;
-    box-sizing: border-box;
-    border: 1px solid;
-    border-radius: 0;
-    padding: 6px 8px 0 8px;
-    line-height: 1.3;
-    outline: none;
-    font-family: Inter, system-ui, sans-serif;
-    color: var(--app-text);
   }
 </style>
