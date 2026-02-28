@@ -29,6 +29,7 @@
   let cursorWorld: Point = { x: 0, y: 0 };
   let themeMode = $state<"light" | "dark">("dark");
   let boardName = $state("Untitled board");
+  let snapEnabled = $state(true);
   let isBoardLoading = $state(false);
   let autosaveTimer = $state<ReturnType<typeof setTimeout> | null>(null);
   let hasLoadedRemoteBoard = $state(false);
@@ -172,6 +173,11 @@
 
   function handleDelete() {
     controller.deleteSelection();
+  }
+
+  function handleToggleSnapping() {
+    snapEnabled = !snapEnabled;
+    controller.setSnappingEnabled(snapEnabled);
   }
 
   function handleExport() {
@@ -571,6 +577,8 @@
     onBack={boardId ? handleBack : undefined}
     onCreate={handleCreate}
     onDelete={handleDelete}
+    {snapEnabled}
+    onToggleSnapping={handleToggleSnapping}
     onExport={handleExport}
     onImport={handleImport}
     {themeMode}

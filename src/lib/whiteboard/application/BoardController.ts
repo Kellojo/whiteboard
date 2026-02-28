@@ -32,15 +32,16 @@ interface BoundsSnapshot {
   height: number;
 }
 
-type CreatableElement =
-  | "rectangle"
-  | "ellipse"
-  | "text"
-  | "heading"
-  | "sticky";
+interface ElementBoundsSnapshot extends BoundsSnapshot {
+  id: string;
+}
+
+type CreatableElement = "rectangle" | "ellipse" | "text" | "heading" | "sticky";
 const FONT_SIZE_STEPS = [
   10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 44, 48,
 ] as const;
+const SNAP_GRID_SIZE = 40;
+const SNAP_SCREEN_THRESHOLD = 8;
 
 export interface SelectedStyleState {
   controls: {
@@ -100,6 +101,8 @@ export class BoardController {
     handle: ResizeHandle;
     initial: BoundsSnapshot;
   } | null = null;
+  private movingSelectionInitial: ElementBoundsSnapshot[] | null = null;
+  private snappingEnabled = true;
 
   constructor(
     private readonly boardStore: Writable<Board>,
@@ -109,6 +112,10 @@ export class BoardController {
 
   getSelectionRect() {
     return this.boxSelectionRect;
+  }
+
+  setSnappingEnabled(enabled: boolean): void {
+    this.snappingEnabled = enabled;
   }
 
   getResizeHandles(): ResizeHandlePosition[] {
@@ -206,6 +213,15 @@ export class BoardController {
       }
       this.selectedElementIdsStore.set(selectedIds);
       this.syncSelectionFlags();
+      this.movingSelectionInitial = board
+        .getSelectedElements()
+        .map((element) => ({
+          id: element.id,
+          x: element.x,
+          y: element.y,
+          width: element.width,
+          height: element.height,
+        }));
       this.mode = "moving";
       return;
     }
@@ -229,6 +245,8 @@ export class BoardController {
     }
 
     const board = get(this.boardStore);
+    const viewport = get(this.viewportStore);
+    const snapThreshold = getSnapThreshold(viewport.zoom);
     const world = this.toWorld(screen);
     const worldDelta = {
       x: world.x - this.lastWorld.x,
@@ -248,8 +266,44 @@ export class BoardController {
     }
 
     if (this.mode === "moving") {
+      const initialSelection = this.movingSelectionInitial;
+      if (!initialSelection?.length || !this.dragStartWorld) {
+        this.lastWorld = world;
+        this.lastScreen = screen;
+        return;
+      }
+
+      const totalDelta = {
+        x: world.x - this.dragStartWorld.x,
+        y: world.y - this.dragStartWorld.y,
+      };
+
+      const movedSelection = initialSelection.map((snapshot) => ({
+        ...snapshot,
+        x: snapshot.x + totalDelta.x,
+        y: snapshot.y + totalDelta.y,
+      }));
+      const stationaryElements = board
+        .getAllElements()
+        .filter((element) => !element.isSelected);
+      const snapOffset = this.snappingEnabled
+        ? getMoveSnapOffset(movedSelection, stationaryElements, snapThreshold)
+        : { x: 0, y: 0 };
+      const snappedDelta = {
+        x: totalDelta.x + snapOffset.x,
+        y: totalDelta.y + snapOffset.y,
+      };
+      const initialById = new Map(
+        initialSelection.map((snapshot) => [snapshot.id, snapshot]),
+      );
+
       for (const element of board.getSelectedElements()) {
-        element.move(worldDelta.x, worldDelta.y);
+        const snapshot = initialById.get(element.id);
+        if (!snapshot) {
+          continue;
+        }
+        element.x = snapshot.x + snappedDelta.x;
+        element.y = snapshot.y + snappedDelta.y;
       }
       this.boardStore.update((current) => current);
     }
@@ -259,16 +313,27 @@ export class BoardController {
         .getAllElements()
         .find((element) => element.id === this.activeResize?.id);
       if (target) {
-        const resized = resizeFromHandle(
+        const resizedBounds = resizeFromHandle(
           this.activeResize.initial,
           world,
           this.activeResize.handle,
           target instanceof ImageElement,
         );
-        target.x = resized.x;
-        target.y = resized.y;
-        target.width = resized.width;
-        target.height = resized.height;
+        const stationaryElements = board
+          .getAllElements()
+          .filter((element) => element.id !== target.id);
+        const snappedBounds = this.snappingEnabled
+          ? snapResizedBounds(
+              resizedBounds,
+              this.activeResize.handle,
+              stationaryElements,
+              snapThreshold,
+            )
+          : resizedBounds;
+        target.x = snappedBounds.x;
+        target.y = snappedBounds.y;
+        target.width = snappedBounds.width;
+        target.height = snappedBounds.height;
         this.boardStore.update((current) => current);
       }
     }
@@ -304,6 +369,7 @@ export class BoardController {
     this.lastScreen = null;
     this.boxSelectionRect = null;
     this.activeResize = null;
+    this.movingSelectionInitial = null;
   }
 
   createElement(type: CreatableElement, position: Point): void {
@@ -926,6 +992,171 @@ function resizeFromHandleWithAspectRatio(
   const right = horizontalSign > 0 ? anchorX + width : anchorX;
   const top = verticalSign > 0 ? anchorY : anchorY - height;
   const bottom = verticalSign > 0 ? anchorY + height : anchorY;
+
+  return {
+    x: left,
+    y: top,
+    width: right - left,
+    height: bottom - top,
+  };
+}
+
+function getSnapThreshold(zoom: number): number {
+  return SNAP_SCREEN_THRESHOLD / Math.max(0.0001, zoom);
+}
+
+function getBoundsForElements(
+  elements: BoundsSnapshot[],
+): BoundsSnapshot | null {
+  if (!elements.length) {
+    return null;
+  }
+
+  const left = Math.min(...elements.map((element) => element.x));
+  const top = Math.min(...elements.map((element) => element.y));
+  const right = Math.max(
+    ...elements.map((element) => element.x + element.width),
+  );
+  const bottom = Math.max(
+    ...elements.map((element) => element.y + element.height),
+  );
+
+  return {
+    x: left,
+    y: top,
+    width: right - left,
+    height: bottom - top,
+  };
+}
+
+function getAxisLines(bounds: BoundsSnapshot): {
+  vertical: number[];
+  horizontal: number[];
+} {
+  return {
+    vertical: [bounds.x, bounds.x + bounds.width / 2, bounds.x + bounds.width],
+    horizontal: [
+      bounds.y,
+      bounds.y + bounds.height / 2,
+      bounds.y + bounds.height,
+    ],
+  };
+}
+
+function getStationaryAxisTargets(elements: CanvasElement[]): {
+  vertical: number[];
+  horizontal: number[];
+} {
+  const vertical: number[] = [];
+  const horizontal: number[] = [];
+
+  for (const element of elements) {
+    vertical.push(
+      element.x,
+      element.x + element.width / 2,
+      element.x + element.width,
+    );
+    horizontal.push(
+      element.y,
+      element.y + element.height / 2,
+      element.y + element.height,
+    );
+  }
+
+  return { vertical, horizontal };
+}
+
+function getBestSnapDelta(
+  movingLines: number[],
+  targetLines: number[],
+  threshold: number,
+): number {
+  let bestDelta = 0;
+  let bestDistance = Infinity;
+
+  for (const movingLine of movingLines) {
+    const nearestGridLine =
+      Math.round(movingLine / SNAP_GRID_SIZE) * SNAP_GRID_SIZE;
+    const gridDelta = nearestGridLine - movingLine;
+    const gridDistance = Math.abs(gridDelta);
+    if (gridDistance <= threshold && gridDistance < bestDistance) {
+      bestDistance = gridDistance;
+      bestDelta = gridDelta;
+    }
+
+    for (const targetLine of targetLines) {
+      const delta = targetLine - movingLine;
+      const distance = Math.abs(delta);
+      if (distance <= threshold && distance < bestDistance) {
+        bestDistance = distance;
+        bestDelta = delta;
+      }
+    }
+  }
+
+  return bestDistance === Infinity ? 0 : bestDelta;
+}
+
+function getMoveSnapOffset(
+  movedSelection: BoundsSnapshot[],
+  stationaryElements: CanvasElement[],
+  threshold: number,
+): Point {
+  const movedBounds = getBoundsForElements(movedSelection);
+  if (!movedBounds) {
+    return { x: 0, y: 0 };
+  }
+
+  const movingLines = getAxisLines(movedBounds);
+  const targets = getStationaryAxisTargets(stationaryElements);
+
+  return {
+    x: getBestSnapDelta(movingLines.vertical, targets.vertical, threshold),
+    y: getBestSnapDelta(movingLines.horizontal, targets.horizontal, threshold),
+  };
+}
+
+function snapResizedBounds(
+  bounds: BoundsSnapshot,
+  handle: ResizeHandle,
+  stationaryElements: CanvasElement[],
+  threshold: number,
+): BoundsSnapshot {
+  const minSize = 12;
+  const targets = getStationaryAxisTargets(stationaryElements);
+
+  let left = bounds.x;
+  let right = bounds.x + bounds.width;
+  let top = bounds.y;
+  let bottom = bounds.y + bounds.height;
+
+  if (handle === "nw" || handle === "sw") {
+    left += getBestSnapDelta([left], targets.vertical, threshold);
+    if (right - left < minSize) {
+      left = right - minSize;
+    }
+  }
+
+  if (handle === "ne" || handle === "se") {
+    right += getBestSnapDelta([right], targets.vertical, threshold);
+    if (right - left < minSize) {
+      right = left + minSize;
+    }
+  }
+
+  if (handle === "nw" || handle === "ne") {
+    top += getBestSnapDelta([top], targets.horizontal, threshold);
+    if (bottom - top < minSize) {
+      top = bottom - minSize;
+    }
+  }
+
+  if (handle === "sw" || handle === "se") {
+    bottom += getBestSnapDelta([bottom], targets.horizontal, threshold);
+    if (bottom - top < minSize) {
+      bottom = top + minSize;
+    }
+  }
 
   return {
     x: left,

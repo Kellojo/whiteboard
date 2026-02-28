@@ -8,6 +8,7 @@
   import backIcon from "@iconify-icons/lucide/arrow-left";
   import sunIcon from "@iconify-icons/lucide/sun";
   import moonIcon from "@iconify-icons/lucide/moon";
+  import magnetIcon from "@iconify-icons/lucide/magnet";
   import importIcon from "@iconify-icons/lucide/upload";
   import exportIcon from "@iconify-icons/lucide/download";
 
@@ -22,6 +23,8 @@
     onBack,
     onCreate,
     onDelete,
+    snapEnabled,
+    onToggleSnapping,
     onExport,
     onImport,
     themeMode,
@@ -30,6 +33,8 @@
     onBack?: () => void;
     onCreate: (kind: CreateKind) => void;
     onDelete: () => void;
+    snapEnabled: boolean;
+    onToggleSnapping: () => void;
     onExport: () => void;
     onImport: (event: Event) => void;
     themeMode: "light" | "dark";
@@ -73,6 +78,16 @@
         width="18"
         height="18"
       />
+    </button>
+    <button
+      type="button"
+      class="action-icon"
+      class:active={snapEnabled}
+      aria-label={snapEnabled ? "Disable snapping" : "Enable snapping"}
+      title={snapEnabled ? "Snapping on" : "Snapping off"}
+      onclick={onToggleSnapping}
+    >
+      <Icon icon={magnetIcon} width="18" height="18" />
     </button>
     <button
       type="button"
@@ -194,6 +209,11 @@
     width: 2.25rem;
     height: 2.25rem;
     padding: 0;
+  }
+
+  .action-icon.active {
+    outline: 0.125rem solid var(--accent);
+    outline-offset: 0.0625rem;
   }
 
   .hint {
