@@ -191,6 +191,58 @@
     </div>
   {/if}
 
+  {#if overlay.style.controls.textColor && overlay.style.textColor}
+    <div class="mini-group color-picker-host">
+      <button
+        type="button"
+        class="color-trigger"
+        class:active={openColorPicker === "text"}
+        aria-label="Text color"
+        title="Text color"
+        onclick={() => toggleColorPicker("text")}
+      >
+        <Icon icon={typeIcon} width="14" height="14" />
+      </button>
+
+      {#if openColorPicker === "text"}
+        <div class="color-popup">
+          <div class="color-grid">
+            {#each textSwatches as color}
+              <button
+                type="button"
+                class="swatch"
+                class:active={overlay.style.textColor === color}
+                style:background={color}
+                title={`Text ${color}`}
+                onclick={() => applyColorSelection("text", color)}
+              ></button>
+            {/each}
+          </div>
+          <div class="color-custom-row">
+            <span>Custom</span>
+            <label
+              class="swatch swatch-picker"
+              class:active={isCustomColorSelected(
+                overlay.style.textColor,
+                textSwatches,
+              )}
+              title="Custom text color"
+            >
+              <input
+                type="color"
+                value={getColorPickerValue(
+                  overlay.style.textColor,
+                  defaultTextPickerColor,
+                )}
+                oninput={(event) => applyCustomColor("text", event)}
+              />
+            </label>
+          </div>
+        </div>
+      {/if}
+    </div>
+  {/if}
+
   {#if overlay.style.controls.borderColor && overlay.style.borderColor}
     <div class="mini-group color-picker-host">
       <button
@@ -289,58 +341,6 @@
                   defaultFillPickerColor,
                 )}
                 oninput={(event) => applyCustomColor("fill", event)}
-              />
-            </label>
-          </div>
-        </div>
-      {/if}
-    </div>
-  {/if}
-
-  {#if overlay.style.controls.textColor && overlay.style.textColor}
-    <div class="mini-group color-picker-host">
-      <button
-        type="button"
-        class="color-trigger"
-        class:active={openColorPicker === "text"}
-        aria-label="Text color"
-        title="Text color"
-        onclick={() => toggleColorPicker("text")}
-      >
-        <Icon icon={typeIcon} width="14" height="14" />
-      </button>
-
-      {#if openColorPicker === "text"}
-        <div class="color-popup">
-          <div class="color-grid">
-            {#each textSwatches as color}
-              <button
-                type="button"
-                class="swatch"
-                class:active={overlay.style.textColor === color}
-                style:background={color}
-                title={`Text ${color}`}
-                onclick={() => applyColorSelection("text", color)}
-              ></button>
-            {/each}
-          </div>
-          <div class="color-custom-row">
-            <span>Custom</span>
-            <label
-              class="swatch swatch-picker"
-              class:active={isCustomColorSelected(
-                overlay.style.textColor,
-                textSwatches,
-              )}
-              title="Custom text color"
-            >
-              <input
-                type="color"
-                value={getColorPickerValue(
-                  overlay.style.textColor,
-                  defaultTextPickerColor,
-                )}
-                oninput={(event) => applyCustomColor("text", event)}
               />
             </label>
           </div>
