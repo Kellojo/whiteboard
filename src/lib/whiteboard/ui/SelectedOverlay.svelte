@@ -14,6 +14,16 @@
     SelectedStyleState,
   } from "../application/BoardController";
   import type { TextAlign } from "../domain/types";
+  import {
+    BORDER_COLOR_SWATCHES,
+    DEFAULT_BORDER_PICKER_COLOR,
+    DEFAULT_FILL_PICKER_COLOR,
+    DEFAULT_ICON_PICKER_COLOR,
+    DEFAULT_TEXT_PICKER_COLOR,
+    FILL_COLOR_SWATCHES,
+    ICON_COLOR_SWATCHES,
+    TEXT_COLOR_SWATCHES,
+  } from "./colorSwatches";
 
   let {
     overlay,
@@ -31,36 +41,10 @@
     null,
   );
 
-  const fillSwatches = [
-    "transparent",
-    "#ffffff",
-    "#fef08a",
-    "#dbeafe",
-    "#dcfce7",
-    "#fee2e2",
-    "#f5f3ff",
-  ];
-
-  const borderSwatches = [
-    "transparent",
-    "#111827",
-    "#374151",
-    "#2563eb",
-    "#16a34a",
-    "#ca8a04",
-    "#dc2626",
-  ];
-
-  const textSwatches = [
-    "#111827",
-    "#1f2937",
-    "#374151",
-    "#2563eb",
-    "#16a34a",
-    "#ca8a04",
-    "#dc2626",
-    "#ffffff",
-  ];
+  const fillSwatches = FILL_COLOR_SWATCHES;
+  const borderSwatches = BORDER_COLOR_SWATCHES;
+  const textSwatches = TEXT_COLOR_SWATCHES;
+  const iconSwatches = ICON_COLOR_SWATCHES;
 
   const textAlignOptions = [
     { label: "Align left", icon: alignLeftIcon, value: "left" },
@@ -69,10 +53,10 @@
   ] satisfies { label: string; icon: object; value: TextAlign }[];
 
   const HEX_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
-  const defaultBorderPickerColor = "#111827";
-  const defaultFillPickerColor = "#ffffff";
-  const defaultTextPickerColor = "#111827";
-  const defaultIconPickerColor = "#111827";
+  const defaultBorderPickerColor = DEFAULT_BORDER_PICKER_COLOR;
+  const defaultFillPickerColor = DEFAULT_FILL_PICKER_COLOR;
+  const defaultTextPickerColor = DEFAULT_TEXT_PICKER_COLOR;
+  const defaultIconPickerColor = DEFAULT_ICON_PICKER_COLOR;
 
   function getColorPickerValue(
     color: string | null | undefined,
@@ -381,7 +365,7 @@
       {#if openColorPicker === "icon"}
         <div class="color-popup">
           <div class="color-grid">
-            {#each textSwatches as color}
+            {#each iconSwatches as color}
               <button
                 type="button"
                 class="swatch"
@@ -398,7 +382,7 @@
               class="swatch swatch-picker"
               class:active={isCustomColorSelected(
                 overlay.style.iconColor,
-                textSwatches,
+                iconSwatches,
               )}
               title="Custom icon color"
             >

@@ -1,22 +1,19 @@
-# sv
+# Simple Whiteboard
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Whiteboards with shapes, sticky notes, text, images and icons. Deployable as a simple docker container in your homelab. Includes support for multiple boards and import/export of individual boards.
 
-## Creating a project
+## Features
+- Draw shapes, add sticky notes, text, images and icons
+- Copy/paste and drag/drop support for images
+- Customizable text color, font weight, alignment, ...
+- Manage multiple boards
+- Share links to specific boards
+- Import/export individual boards as JSON files
+- Deployable as a simple docker container
 
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project
-npx sv create my-app
-```
-
-To recreate this project with the same configuration:
-
-```sh
-# recreate this project
-npx sv create --template minimal --types ts --install npm whiteboard
-```
+Currently does not support:
+- Real time collaboration (not planned for the foreseeable future)
+- User accounts and permissions (ideally, put this behind a reverse proxy with authentication)
 
 ## Developing
 
@@ -24,9 +21,6 @@ Once you've created a project and installed dependencies with `npm install` (or 
 
 ```sh
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
 ## Building
@@ -36,7 +30,3 @@ To create a production version of your app:
 ```sh
 npm run build
 ```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
