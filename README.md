@@ -2,7 +2,7 @@
 
 Whiteboards with shapes, sticky notes, text, images and icons. Deployable as a simple docker container in your homelab. Includes support for multiple boards and import/export of individual boards.
 
-![Screenshot of the whiteboard app, showing a board with various shapes, sticky notes, text and icons](./docs/canvas.png.png)
+![Screenshot of the whiteboard app, showing a board with various shapes, sticky notes, text and icons](./docs/canvas.png)
 
 ![Screenshot of the whiteboard app's toolbar, showing various tools for drawing shapes, adding text and icons, and managing boards](./docs/board%20overview.png)
 
