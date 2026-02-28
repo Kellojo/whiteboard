@@ -1,5 +1,5 @@
 import { CanvasElement } from "./CanvasElement";
-import type { CanvasElementJSON, Point, TextAlign } from "./types";
+import type { CanvasElementJSON, FontWeight, Point, TextAlign } from "./types";
 
 export class StickyNoteElement extends CanvasElement {
   text: string;
@@ -8,6 +8,7 @@ export class StickyNoteElement extends CanvasElement {
   borderColor: string;
   textColor: string;
   textAlign: TextAlign;
+  fontWeight: FontWeight;
 
   constructor(
     params: ConstructorParameters<typeof CanvasElement>[0] & {
@@ -17,6 +18,7 @@ export class StickyNoteElement extends CanvasElement {
       borderColor?: string;
       textColor?: string;
       textAlign?: TextAlign;
+      fontWeight?: FontWeight;
     },
   ) {
     super(params);
@@ -26,6 +28,7 @@ export class StickyNoteElement extends CanvasElement {
     this.borderColor = params.borderColor ?? "#854d0e";
     this.textColor = params.textColor ?? "#1f2937";
     this.textAlign = "center";
+    this.fontWeight = params.fontWeight ?? "normal";
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
@@ -42,7 +45,7 @@ export class StickyNoteElement extends CanvasElement {
     }
 
     ctx.fillStyle = this.textColor;
-    ctx.font = `${this.fontSize}px Inter, system-ui, sans-serif`;
+    ctx.font = `${this.fontWeight} ${this.fontSize}px Inter, system-ui, sans-serif`;
     ctx.textBaseline = "top";
     ctx.textAlign = "center";
     const textX = this.x + this.width / 2;
@@ -91,6 +94,7 @@ export class StickyNoteElement extends CanvasElement {
       borderColor: this.borderColor,
       textColor: this.textColor,
       textAlign: this.textAlign,
+      fontWeight: this.fontWeight,
     };
   }
 

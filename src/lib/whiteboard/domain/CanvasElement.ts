@@ -6,6 +6,7 @@ export interface StyleControlOptions {
   textColor: boolean;
   textAlign: boolean;
   fontSize: boolean;
+  fontWeight: boolean;
 }
 
 export abstract class CanvasElement {
@@ -52,6 +53,8 @@ export abstract class CanvasElement {
         textAlignValue === "center" ||
         textAlignValue === "right",
       fontSize: typeof element.fontSize === "number",
+      fontWeight:
+        element.fontWeight === "normal" || element.fontWeight === "bold",
     };
   }
 

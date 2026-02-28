@@ -25,6 +25,7 @@
     height: number;
     fontSize: number;
     textAlign: EditableTextTarget["textAlign"];
+    fontWeight: EditableTextTarget["fontWeight"];
     color: string;
     background: string;
     borderColor: string;
@@ -51,6 +52,7 @@
 
   function measureWrappedLineCount(
     text: string,
+    fontWeight: EditableTextTarget["fontWeight"],
     fontSize: number,
     maxWidth: number,
   ): number {
@@ -59,7 +61,7 @@
       return Math.max(1, text.split("\n").length);
     }
 
-    context.font = `${fontSize}px Inter, system-ui, sans-serif`;
+    context.font = `${fontWeight} ${fontSize}px Inter, system-ui, sans-serif`;
     const paragraphs = text.split("\n");
     let lineCount = 0;
 
@@ -126,6 +128,7 @@
       const maxTextWidth = Math.max(0, width - borderWidth * 2 - paddingX * 2);
       const lineCount = measureWrappedLineCount(
         editor.text,
+        editor.fontWeight,
         calibratedFontSize,
         maxTextWidth,
       );
@@ -144,6 +147,7 @@
       height,
       fontSize: calibratedFontSize,
       textAlign: editor.textAlign,
+      fontWeight: editor.fontWeight,
       color: editor.textColor,
       background: resolveEditorBackground(editor.fillColor),
       borderColor: editor.borderColor,
@@ -172,6 +176,7 @@
   style:width={`${editorStyle?.width ?? 220}px`}
   style:height={`${editorStyle?.height ?? 100}px`}
   style:font-size={`${editorStyle?.fontSize ?? 16}px`}
+  style:font-weight={editorStyle?.fontWeight ?? "normal"}
   style:text-align={editorStyle?.textAlign ?? "left"}
   style:color={editorStyle?.color ?? "var(--app-text)"}
   style:background={editorStyle?.background ?? "var(--surface-1)"}

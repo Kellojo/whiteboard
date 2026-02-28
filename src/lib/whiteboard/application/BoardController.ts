@@ -8,7 +8,12 @@ import { RectangleElement } from "../domain/RectangleElement";
 import { StickyNoteElement } from "../domain/StickyNoteElement";
 import { TextElement } from "../domain/TextElement";
 import { VideoElement } from "../domain/VideoElement";
-import type { CanvasElementJSON, Point, TextAlign } from "../domain/types";
+import type {
+  CanvasElementJSON,
+  FontWeight,
+  Point,
+  TextAlign,
+} from "../domain/types";
 import type { ViewportState } from "../stores";
 import { createIconSvgDataWithColor } from "../ui/iconCatalog";
 
@@ -52,6 +57,7 @@ export interface SelectedStyleState {
     iconColor: boolean;
     textAlign: boolean;
     fontSize: boolean;
+    fontWeight: boolean;
   };
   fillColor: string | null;
   borderColor: string | null;
@@ -59,6 +65,7 @@ export interface SelectedStyleState {
   iconColor: string | null;
   textAlign: TextAlign | null;
   fontSize: number | null;
+  fontWeight: FontWeight | null;
   canDecreaseFontSize: boolean;
   canIncreaseFontSize: boolean;
 }
@@ -76,6 +83,7 @@ export interface EditableTextTarget {
   borderColor: string;
   textColor: string;
   textAlign: TextAlign;
+  fontWeight: FontWeight;
 }
 
 export interface LayerItem {
@@ -560,6 +568,7 @@ export class BoardController {
       borderColor: hit.borderColor,
       textColor: hit.textColor,
       textAlign: hit instanceof StickyNoteElement ? "center" : hit.textAlign,
+      fontWeight: hit.fontWeight,
     };
   }
 
@@ -701,11 +710,17 @@ export class BoardController {
       "fontSize" in selected && typeof selected.fontSize === "number"
         ? selected.fontSize
         : null;
+    const fontWeight =
+      "fontWeight" in selected &&
+      (selected.fontWeight === "normal" || selected.fontWeight === "bold")
+        ? selected.fontWeight
+        : null;
     const hasFillColor = fillColor !== null;
     const hasBorderColor = borderColor !== null;
     const hasTextColor = textColor !== null;
     const hasIconColor = iconColor !== null;
     const hasFontSize = fontSize !== null;
+    const hasFontWeight = fontWeight !== null;
 
     return {
       controls: {
@@ -715,6 +730,7 @@ export class BoardController {
         iconColor: hasIconColor,
         textAlign: controls.textAlign && hasTextAlign,
         fontSize: controls.fontSize && hasFontSize,
+        fontWeight: controls.fontWeight && hasFontWeight,
       },
       fillColor,
       borderColor,
@@ -722,9 +738,24 @@ export class BoardController {
       iconColor,
       textAlign,
       fontSize,
+      fontWeight,
       canDecreaseFontSize: this.canAdjustFontSize(selected, "decrease"),
       canIncreaseFontSize: this.canAdjustFontSize(selected, "increase"),
     };
+  }
+
+  toggleSelectedBold(): void {
+    this.applyStyleToSingleSelected((element) => {
+      if (!element.getStyleControlOptions().fontWeight) {
+        return;
+      }
+      if (
+        "fontWeight" in element &&
+        (element.fontWeight === "normal" || element.fontWeight === "bold")
+      ) {
+        element.fontWeight = element.fontWeight === "bold" ? "normal" : "bold";
+      }
+    });
   }
 
   decreaseSelectedFontSize(): void {

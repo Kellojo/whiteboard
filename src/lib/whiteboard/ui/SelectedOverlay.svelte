@@ -8,6 +8,7 @@
   import squareIcon from "@iconify-icons/lucide/square";
   import paintBucketIcon from "@iconify-icons/lucide/paint-bucket";
   import typeIcon from "@iconify-icons/lucide/type";
+  import boldIcon from "@iconify-icons/lucide/bold";
   import { onMount } from "svelte";
   import type {
     BoardController,
@@ -188,6 +189,19 @@
           <Icon icon={option.icon} width="16" height="16" />
         </button>
       {/each}
+    </div>
+  {/if}
+
+  {#if overlay.style.controls.fontWeight && overlay.style.fontWeight}
+    <div class="mini-group">
+      <button
+        type="button"
+        title="Bold"
+        class:active={overlay.style.fontWeight === "bold"}
+        onclick={() => controller.toggleSelectedBold()}
+      >
+        <Icon icon={boldIcon} width="16" height="16" />
+      </button>
     </div>
   {/if}
 

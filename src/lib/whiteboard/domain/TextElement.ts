@@ -1,5 +1,5 @@
 import { CanvasElement } from "./CanvasElement";
-import type { CanvasElementJSON, Point, TextAlign } from "./types";
+import type { CanvasElementJSON, FontWeight, Point, TextAlign } from "./types";
 
 export class TextElement extends CanvasElement {
   text: string;
@@ -8,6 +8,7 @@ export class TextElement extends CanvasElement {
   borderColor: string;
   textColor: string;
   textAlign: TextAlign;
+  fontWeight: FontWeight;
 
   constructor(
     params: ConstructorParameters<typeof CanvasElement>[0] & {
@@ -17,6 +18,7 @@ export class TextElement extends CanvasElement {
       borderColor?: string;
       textColor?: string;
       textAlign?: TextAlign;
+      fontWeight?: FontWeight;
     },
   ) {
     super(params);
@@ -26,6 +28,7 @@ export class TextElement extends CanvasElement {
     this.borderColor = params.borderColor ?? "transparent";
     this.textColor = params.textColor ?? "#111827";
     this.textAlign = params.textAlign ?? "left";
+    this.fontWeight = params.fontWeight ?? "normal";
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
@@ -36,7 +39,7 @@ export class TextElement extends CanvasElement {
     ctx.fillRect(this.x, this.y, this.width, this.height);
     ctx.strokeRect(this.x, this.y, this.width, this.height);
 
-    ctx.font = `${this.fontSize}px Inter, system-ui, sans-serif`;
+    ctx.font = `${this.fontWeight} ${this.fontSize}px Inter, system-ui, sans-serif`;
     ctx.fillStyle = this.textColor;
     ctx.textBaseline = "top";
     ctx.textAlign = this.textAlign;
@@ -85,6 +88,7 @@ export class TextElement extends CanvasElement {
       borderColor: this.borderColor,
       textColor: this.textColor,
       textAlign: this.textAlign,
+      fontWeight: this.fontWeight,
     };
   }
 

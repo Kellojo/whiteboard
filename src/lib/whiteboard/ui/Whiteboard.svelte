@@ -562,7 +562,8 @@
       !style.controls.textColor &&
       !style.controls.iconColor &&
       !style.controls.textAlign &&
-      !style.controls.fontSize
+      !style.controls.fontSize &&
+      !style.controls.fontWeight
     ) {
       return null;
     }
@@ -657,6 +658,7 @@
       borderColor: target.borderColor,
       textColor: target.textColor,
       textAlign: target.textAlign,
+      fontWeight: target.fontWeight,
     };
   }
 

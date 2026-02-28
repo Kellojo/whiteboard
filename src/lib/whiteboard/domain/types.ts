@@ -11,6 +11,7 @@ export interface Rect {
 }
 
 export type TextAlign = "left" | "center" | "right";
+export type FontWeight = "normal" | "bold";
 
 export interface CanvasElementJSON {
   type: string;
@@ -27,6 +28,7 @@ export interface CanvasElementJSON {
   borderColor?: string;
   textColor?: string;
   textAlign?: TextAlign;
+  fontWeight?: FontWeight;
   imageDataUrl?: string;
   iconId?: string;
   iconColor?: string;
