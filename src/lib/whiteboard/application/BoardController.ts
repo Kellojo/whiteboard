@@ -32,7 +32,12 @@ interface BoundsSnapshot {
   height: number;
 }
 
-type CreatableElement = "rectangle" | "ellipse" | "text" | "sticky";
+type CreatableElement =
+  | "rectangle"
+  | "ellipse"
+  | "text"
+  | "heading"
+  | "sticky";
 const FONT_SIZE_STEPS = [
   10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 44, 48,
 ] as const;
@@ -336,6 +341,22 @@ export class BoardController {
             width: 120,
             height: 30,
             text: "Text",
+          }),
+        );
+      }
+
+      if (type === "heading") {
+        board.addElement(
+          new TextElement({
+            id: crypto.randomUUID(),
+            x: position.x - 220,
+            y: position.y - 30,
+            width: 440,
+            height: 60,
+            text: "Heading",
+            fontSize: 36,
+            fillColor: "transparent",
+            borderColor: "transparent",
           }),
         );
       }

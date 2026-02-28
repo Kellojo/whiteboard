@@ -22,8 +22,8 @@ export class TextElement extends CanvasElement {
     super(params);
     this.text = params.text ?? "Text";
     this.fontSize = params.fontSize ?? 18;
-    this.fillColor = params.fillColor ?? "#ffffff";
-    this.borderColor = params.borderColor ?? "#6b7280";
+    this.fillColor = params.fillColor ?? "transparent";
+    this.borderColor = params.borderColor ?? "transparent";
     this.textColor = params.textColor ?? "#111827";
     this.textAlign = params.textAlign ?? "left";
   }

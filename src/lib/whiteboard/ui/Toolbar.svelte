@@ -3,6 +3,7 @@
   import squareIcon from "@iconify-icons/lucide/square";
   import circleIcon from "@iconify-icons/lucide/circle";
   import typeIcon from "@iconify-icons/lucide/type";
+  import headingIcon from "@iconify-icons/lucide/heading-1";
   import stickyIcon from "@iconify-icons/lucide/sticky-note";
   import backIcon from "@iconify-icons/lucide/arrow-left";
   import sunIcon from "@iconify-icons/lucide/sun";
@@ -10,7 +11,12 @@
   import importIcon from "@iconify-icons/lucide/upload";
   import exportIcon from "@iconify-icons/lucide/download";
 
-  export type CreateKind = "rectangle" | "ellipse" | "text" | "sticky";
+  export type CreateKind =
+    | "rectangle"
+    | "ellipse"
+    | "text"
+    | "heading"
+    | "sticky";
 
   let {
     onBack,
@@ -31,10 +37,12 @@
   } = $props();
 
   const createButtons = [
+    { label: "Sticky", icon: stickyIcon, kind: "sticky" },
+    { label: "Text", icon: typeIcon, kind: "text" },
+    { label: "Heading", icon: headingIcon, kind: "heading" },
+
     { label: "Rectangle", icon: squareIcon, kind: "rectangle" },
     { label: "Ellipse", icon: circleIcon, kind: "ellipse" },
-    { label: "Text", icon: typeIcon, kind: "text" },
-    { label: "Sticky", icon: stickyIcon, kind: "sticky" },
   ] satisfies { label: string; icon: object; kind: CreateKind }[];
 </script>
 
