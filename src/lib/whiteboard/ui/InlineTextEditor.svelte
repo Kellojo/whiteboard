@@ -108,6 +108,7 @@
     const dpr = window.devicePixelRatio || 1;
     const scale = viewport.zoom / dpr;
     const borderWidth = Math.max(1, scale);
+    const verticalNudge = Math.max(0.75, 1.25 * scale);
     const calibratedFontSize =
       Math.max(1, Number(editor.fontSize) * scale) *
       inlineEditorFontCalibration;
@@ -120,7 +121,8 @@
       0,
       (editor.kind === "sticky" ? 8 : 6) * scale -
         borderWidth -
-        leadingCompensation,
+        leadingCompensation -
+        verticalNudge,
     );
 
     let paddingTop = defaultPaddingTop;
@@ -136,7 +138,9 @@
       const totalTextHeight = lineCount * lineHeight;
       paddingTop = Math.max(
         0,
-        (innerHeight - totalTextHeight) / 2 - leadingCompensation,
+        (innerHeight - totalTextHeight) / 2 -
+          leadingCompensation -
+          verticalNudge,
       );
     }
 
