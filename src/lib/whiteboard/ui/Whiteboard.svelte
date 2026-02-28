@@ -762,7 +762,7 @@
       <iframe
         class="video-frame"
         src={video.embedUrl}
-        title="Embedded YouTube video"
+        title="Embedded video"
         loading="lazy"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         referrerpolicy="strict-origin-when-cross-origin"

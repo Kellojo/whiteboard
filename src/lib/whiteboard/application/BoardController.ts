@@ -384,35 +384,42 @@ export class BoardController {
   }
 
   createElement(type: CreatableElement, position: Point): void {
+    let createdElementId: string | null = null;
+
     this.boardStore.update((board) => {
       if (type === "rectangle") {
+        const id = crypto.randomUUID();
         board.addElement(
           new RectangleElement({
-            id: crypto.randomUUID(),
+            id,
             x: position.x - 80,
             y: position.y - 50,
             width: 160,
             height: 100,
           }),
         );
+        createdElementId = id;
       }
 
       if (type === "ellipse") {
+        const id = crypto.randomUUID();
         board.addElement(
           new EllipseElement({
-            id: crypto.randomUUID(),
+            id,
             x: position.x - 80,
             y: position.y - 50,
             width: 160,
             height: 100,
           }),
         );
+        createdElementId = id;
       }
 
       if (type === "text") {
+        const id = crypto.randomUUID();
         board.addElement(
           new TextElement({
-            id: crypto.randomUUID(),
+            id,
             x: position.x - 60,
             y: position.y - 15,
             width: 120,
@@ -420,12 +427,14 @@ export class BoardController {
             text: "Text",
           }),
         );
+        createdElementId = id;
       }
 
       if (type === "heading") {
+        const id = crypto.randomUUID();
         board.addElement(
           new TextElement({
-            id: crypto.randomUUID(),
+            id,
             x: position.x - 220,
             y: position.y - 30,
             width: 440,
@@ -436,13 +445,15 @@ export class BoardController {
             borderColor: "transparent",
           }),
         );
+        createdElementId = id;
       }
 
       if (type === "sticky") {
         const size = 160;
+        const id = crypto.randomUUID();
         board.addElement(
           new StickyNoteElement({
-            id: crypto.randomUUID(),
+            id,
             x: position.x - size / 2,
             y: position.y - size / 2,
             width: size,
@@ -450,10 +461,15 @@ export class BoardController {
             text: "Sticky note",
           }),
         );
+        createdElementId = id;
       }
 
       return board;
     });
+
+    if (createdElementId) {
+      this.selectSingleElement(createdElementId);
+    }
   }
 
   addImageElement(
@@ -473,11 +489,12 @@ export class BoardController {
     );
     const width = Math.max(40, naturalWidth * scale);
     const height = Math.max(40, naturalHeight * scale);
+    const id = crypto.randomUUID();
 
     this.boardStore.update((board) => {
       board.addElement(
         new ImageElement({
-          id: crypto.randomUUID(),
+          id,
           x: position.x - width / 2,
           y: position.y - height / 2,
           width,
@@ -489,6 +506,8 @@ export class BoardController {
       );
       return board;
     });
+
+    this.selectSingleElement(id);
   }
 
   addTextElement(text: string, position: Point): void {
@@ -501,11 +520,12 @@ export class BoardController {
     const maxLineLength = Math.max(1, ...lines.map((line) => line.length));
     const width = Math.min(420, Math.max(140, maxLineLength * 9 + 24));
     const height = Math.min(320, Math.max(44, lines.length * 26 + 18));
+    const id = crypto.randomUUID();
 
     this.boardStore.update((board) => {
       board.addElement(
         new TextElement({
-          id: crypto.randomUUID(),
+          id,
           x: position.x - width / 2,
           y: position.y - height / 2,
           width,
@@ -515,6 +535,8 @@ export class BoardController {
       );
       return board;
     });
+
+    this.selectSingleElement(id);
   }
 
   addYouTubeVideoElement(url: string, position: Point): boolean {
@@ -525,11 +547,12 @@ export class BoardController {
 
     const width = 420;
     const height = 236;
+    const id = crypto.randomUUID();
 
     this.boardStore.update((board) => {
       board.addElement(
         new VideoElement({
-          id: crypto.randomUUID(),
+          id,
           x: position.x - width / 2,
           y: position.y - height / 2,
           width,
@@ -539,6 +562,8 @@ export class BoardController {
       );
       return board;
     });
+
+    this.selectSingleElement(id);
 
     return true;
   }
@@ -594,7 +619,7 @@ export class BoardController {
         const type = snapshot.type;
         const videoTitle =
           type === "video" && typeof snapshot.videoUrl === "string"
-            ? "YouTube video"
+            ? "Video"
             : "";
         const rawText =
           (type === "text" || type === "sticky") &&

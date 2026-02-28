@@ -68,19 +68,16 @@ export class VideoElement extends CanvasElement {
     ctx.fillStyle = "#111827";
     ctx.fillRect(this.x, this.y, this.width, this.height);
 
-    ctx.fillStyle = "#ef4444";
-    const badgeWidth = Math.min(86, Math.max(60, this.width * 0.24));
-    const badgeHeight = Math.min(42, Math.max(30, this.height * 0.24));
-    const badgeX = this.x + this.width / 2 - badgeWidth / 2;
-    const badgeY = this.y + this.height / 2 - badgeHeight / 2;
-    roundRect(ctx, badgeX, badgeY, badgeWidth, badgeHeight, 10);
-    ctx.fill();
+    const iconWidth = Math.min(44, Math.max(24, this.width * 0.18));
+    const iconHeight = Math.min(52, Math.max(28, this.height * 0.24));
+    const iconX = this.x + this.width / 2 - iconWidth / 2;
+    const iconY = this.y + this.height / 2 - iconHeight / 2;
 
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = "#9ca3af";
     ctx.beginPath();
-    ctx.moveTo(badgeX + badgeWidth * 0.43, badgeY + badgeHeight * 0.28);
-    ctx.lineTo(badgeX + badgeWidth * 0.43, badgeY + badgeHeight * 0.72);
-    ctx.lineTo(badgeX + badgeWidth * 0.73, badgeY + badgeHeight * 0.5);
+    ctx.moveTo(iconX, iconY);
+    ctx.lineTo(iconX, iconY + iconHeight);
+    ctx.lineTo(iconX + iconWidth, iconY + iconHeight * 0.5);
     ctx.closePath();
     ctx.fill();
 
@@ -126,22 +123,4 @@ export class VideoElement extends CanvasElement {
       videoUrl: json.videoUrl ?? "",
     });
   }
-}
-
-function roundRect(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  radius: number,
-): void {
-  const r = Math.max(0, Math.min(radius, Math.min(width, height) / 2));
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + width, y, x + width, y + height, r);
-  ctx.arcTo(x + width, y + height, x, y + height, r);
-  ctx.arcTo(x, y + height, x, y, r);
-  ctx.arcTo(x, y, x + width, y, r);
-  ctx.closePath();
 }
