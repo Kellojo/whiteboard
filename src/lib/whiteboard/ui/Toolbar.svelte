@@ -9,6 +9,7 @@
   import sunIcon from "@iconify-icons/lucide/sun";
   import moonIcon from "@iconify-icons/lucide/moon";
   import magnetIcon from "@iconify-icons/lucide/magnet";
+  import paletteIcon from "@iconify-icons/lucide/palette";
   import importIcon from "@iconify-icons/lucide/upload";
   import exportIcon from "@iconify-icons/lucide/download";
 
@@ -23,6 +24,8 @@
     onBack,
     onCreate,
     onDelete,
+    iconBrowserOpen,
+    onToggleIconBrowser,
     snapEnabled,
     onToggleSnapping,
     onExport,
@@ -33,6 +36,8 @@
     onBack?: () => void;
     onCreate: (kind: CreateKind) => void;
     onDelete: () => void;
+    iconBrowserOpen: boolean;
+    onToggleIconBrowser: () => void;
     snapEnabled: boolean;
     onToggleSnapping: () => void;
     onExport: () => void;
@@ -119,6 +124,17 @@
         <Icon icon={button.icon} width="22" height="22" />
       </button>
     {/each}
+    <button
+      type="button"
+      class="tool-button"
+      class:active={iconBrowserOpen}
+      data-icon-browser-toggle="true"
+      aria-label={iconBrowserOpen ? "Hide icon browser" : "Show icon browser"}
+      title={iconBrowserOpen ? "Hide icons" : "Browse icons"}
+      onclick={onToggleIconBrowser}
+    >
+      <Icon icon={paletteIcon} width="22" height="22" />
+    </button>
   </div>
 </div>
 <p class="hint">
@@ -202,6 +218,11 @@
     padding: 0;
   }
 
+  .tool-button.active {
+    outline: 0.125rem solid var(--accent);
+    outline-offset: 0.0625rem;
+  }
+
   .action-icon {
     display: inline-flex;
     align-items: center;
@@ -227,11 +248,6 @@
     padding: 0.5rem;
     font-size: 0.875rem;
     color: var(--app-text-muted);
-    background: var(--surface-1);
-    border: 0.125rem solid var(--border-1);
     border-radius: 0.625rem;
-    box-shadow: var(--shadow-l);
-    backdrop-filter: blur(var(--glass-blur));
-    -webkit-backdrop-filter: blur(var(--glass-blur));
   }
 </style>

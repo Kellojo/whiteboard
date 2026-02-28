@@ -16,10 +16,12 @@
   import type { CanvasElementJSON, Point } from "../domain/types";
   import { board, selectedElementIds, viewport } from "../stores";
   import CanvasRenderer from "./CanvasRenderer.svelte";
+  import IconBrowser from "./IconBrowser.svelte";
   import InlineTextEditor from "./InlineTextEditor.svelte";
   import SelectedOverlay from "./SelectedOverlay.svelte";
   import VideoModeToolbar from "./VideoModeToolbar.svelte";
   import Toolbar, { type CreateKind } from "./Toolbar.svelte";
+  import { createIconSvgData } from "./iconCatalog";
 
   let { boardId = null }: { boardId?: string | null } = $props();
 
@@ -29,6 +31,7 @@
   let cursorWorld: Point = { x: 0, y: 0 };
   let themeMode = $state<"light" | "dark">("dark");
   let boardName = $state("Untitled board");
+  let iconBrowserOpen = $state(false);
   let snapEnabled = $state(true);
   let isBoardLoading = $state(false);
   let autosaveTimer = $state<ReturnType<typeof setTimeout> | null>(null);
@@ -175,6 +178,30 @@
     controller.deleteSelection();
   }
 
+  function handleToggleIconBrowser() {
+    iconBrowserOpen = !iconBrowserOpen;
+  }
+
+  function handleGlobalPointerDown(event: PointerEvent) {
+    if (!iconBrowserOpen) {
+      return;
+    }
+
+    if (!(event.target instanceof Element)) {
+      iconBrowserOpen = false;
+      return;
+    }
+
+    if (
+      event.target.closest("[data-icon-browser-panel='true']") ||
+      event.target.closest("[data-icon-browser-toggle='true']")
+    ) {
+      return;
+    }
+
+    iconBrowserOpen = false;
+  }
+
   function handleToggleSnapping() {
     snapEnabled = !snapEnabled;
     controller.setSnappingEnabled(snapEnabled);
@@ -270,6 +297,7 @@
 
     window.addEventListener("keydown", handleKeydown);
     window.addEventListener("paste", handlePaste);
+    window.addEventListener("pointerdown", handleGlobalPointerDown);
 
     if (boardId) {
       void loadBoardFromServer(boardId);
@@ -290,6 +318,7 @@
       document.documentElement.style.overflow = previousHtmlOverflow;
       window.removeEventListener("keydown", handleKeydown);
       window.removeEventListener("paste", handlePaste);
+      window.removeEventListener("pointerdown", handleGlobalPointerDown);
     };
   });
 
@@ -374,6 +403,19 @@
 
   async function handleImageDrop(files: File[], worldPoint: Point) {
     await addImageFilesAt(files, worldPoint);
+  }
+
+  async function handleIconDrop(iconId: string, worldPoint: Point) {
+    const iconSvg = await createIconSvgData(iconId);
+    if (!iconSvg) {
+      return;
+    }
+
+    const scale = 3;
+    controller.addImageElement(iconSvg.dataUrl, worldPoint, {
+      width: iconSvg.width * scale,
+      height: iconSvg.height * scale,
+    });
   }
 
   async function addImageFilesAt(files: File[], worldPoint: Point) {
@@ -577,6 +619,8 @@
     onBack={boardId ? handleBack : undefined}
     onCreate={handleCreate}
     onDelete={handleDelete}
+    {iconBrowserOpen}
+    onToggleIconBrowser={handleToggleIconBrowser}
     {snapEnabled}
     onToggleSnapping={handleToggleSnapping}
     onExport={handleExport}
@@ -584,6 +628,9 @@
     {themeMode}
     onToggleTheme={toggleTheme}
   />
+  {#if iconBrowserOpen}
+    <IconBrowser />
+  {/if}
   <div class="board-area">
     <CanvasRenderer
       board={$board}
@@ -591,6 +638,7 @@
       {controller}
       onCursorWorldChange={handleCursorWorldChange}
       onImageDrop={handleImageDrop}
+      onIconDrop={handleIconDrop}
       onDoubleClick={handleCanvasDoubleClick}
     />
   </div>

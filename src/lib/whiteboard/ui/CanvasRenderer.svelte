@@ -4,6 +4,7 @@
   import type { Board } from "../domain/Board";
   import type { Point, Rect } from "../domain/types";
   import type { ViewportState } from "../stores";
+  import { ICON_DROP_MIME, ICON_DROP_TEXT_PREFIX } from "./iconCatalog";
 
   let {
     board,
@@ -11,6 +12,7 @@
     controller,
     onCursorWorldChange,
     onImageDrop,
+    onIconDrop,
     onDoubleClick,
   }: {
     board: Board;
@@ -18,6 +20,7 @@
     controller: BoardController;
     onCursorWorldChange: (point: Point) => void;
     onImageDrop: (files: File[], worldPoint: Point) => void;
+    onIconDrop: (iconId: string, worldPoint: Point) => void | Promise<void>;
     onDoubleClick: (worldPoint: Point) => void;
   } = $props();
 
@@ -248,11 +251,41 @@
 
   function handleDragOver(event: DragEvent) {
     event.preventDefault();
+    if (!event.dataTransfer) {
+      return;
+    }
+    const hasIconPayload =
+      event.dataTransfer.types.includes(ICON_DROP_MIME) ||
+      event.dataTransfer.types.includes("text/plain");
+    if (hasIconPayload) {
+      event.dataTransfer.dropEffect = "copy";
+    }
   }
 
   function handleDrop(event: DragEvent) {
     event.preventDefault();
     if (!event.dataTransfer) {
+      return;
+    }
+
+    const iconId =
+      event.dataTransfer.getData(ICON_DROP_MIME) ||
+      (() => {
+        const plainText = event.dataTransfer?.getData("text/plain") ?? "";
+        if (!plainText.startsWith(ICON_DROP_TEXT_PREFIX)) {
+          return "";
+        }
+        return plainText.slice(ICON_DROP_TEXT_PREFIX.length);
+      })();
+
+    if (iconId) {
+      const point = screenPoint({
+        clientX: event.clientX,
+        clientY: event.clientY,
+      });
+      const worldPoint = controller.toWorld(point);
+      onCursorWorldChange(worldPoint);
+      onIconDrop(iconId, worldPoint);
       return;
     }
 
