@@ -3,6 +3,7 @@ import { Board } from "../domain/Board";
 import type { CanvasElement } from "../domain/CanvasElement";
 import { elementFromJSON } from "../domain/elementFactory";
 import { EllipseElement } from "../domain/EllipseElement";
+import { FreeDrawElement } from "../domain/FreeDrawElement";
 import { ImageElement } from "../domain/ImageElement";
 import { RectangleElement } from "../domain/RectangleElement";
 import { StickyNoteElement } from "../domain/StickyNoteElement";
@@ -22,7 +23,8 @@ type InteractionMode =
   | "panning"
   | "moving"
   | "box-select"
-  | "resizing";
+  | "resizing"
+  | "free-drawing";
 type ResizeHandle = "nw" | "ne" | "sw" | "se";
 
 interface ResizeHandlePosition {
@@ -48,6 +50,9 @@ const FONT_SIZE_STEPS = [
 ] as const;
 const SNAP_GRID_SIZE = 40;
 const SNAP_SCREEN_THRESHOLD = 8;
+const FREE_DRAW_MIN_POINT_DISTANCE = 2;
+const DEFAULT_FREE_DRAW_COLOR = "#9ca3af";
+const DEFAULT_FREE_DRAW_STROKE_WIDTH = 3;
 
 export interface SelectedStyleState {
   controls: {
@@ -114,6 +119,10 @@ export class BoardController {
   } | null = null;
   private movingSelectionInitial: ElementBoundsSnapshot[] | null = null;
   private snappingEnabled = true;
+  private freeDrawEnabled = false;
+  private freeDrawPoints: Point[] | null = null;
+  private freeDrawColor = DEFAULT_FREE_DRAW_COLOR;
+  private freeDrawStrokeWidth = DEFAULT_FREE_DRAW_STROKE_WIDTH;
 
   constructor(
     private readonly boardStore: Writable<Board>,
@@ -127,6 +136,42 @@ export class BoardController {
 
   setSnappingEnabled(enabled: boolean): void {
     this.snappingEnabled = enabled;
+  }
+
+  setFreeDrawEnabled(enabled: boolean): void {
+    this.freeDrawEnabled = enabled;
+    if (!enabled) {
+      this.freeDrawPoints = null;
+      if (this.mode === "free-drawing") {
+        this.mode = "idle";
+      }
+    }
+  }
+
+  getFreeDrawPreviewPoints(): Point[] | null {
+    return this.freeDrawPoints;
+  }
+
+  getFreeDrawColor(): string {
+    return this.freeDrawColor;
+  }
+
+  setFreeDrawColor(color: string): void {
+    if (!/^#[0-9a-f]{6}$/i.test(color)) {
+      return;
+    }
+    this.freeDrawColor = color;
+  }
+
+  getFreeDrawStrokeWidth(): number {
+    return this.freeDrawStrokeWidth;
+  }
+
+  setFreeDrawStrokeWidth(width: number): void {
+    if (!Number.isFinite(width)) {
+      return;
+    }
+    this.freeDrawStrokeWidth = Math.max(1, Math.min(16, Math.round(width)));
   }
 
   getResizeHandles(): ResizeHandlePosition[] {
@@ -186,6 +231,12 @@ export class BoardController {
 
     if (options.isPanGesture) {
       this.mode = "panning";
+      return;
+    }
+
+    if (this.freeDrawEnabled) {
+      this.mode = "free-drawing";
+      this.freeDrawPoints = [world];
       return;
     }
 
@@ -276,6 +327,24 @@ export class BoardController {
       }));
     }
 
+    if (this.mode === "free-drawing") {
+      if (!this.freeDrawPoints) {
+        this.freeDrawPoints = [world];
+      } else {
+        const lastPoint = this.freeDrawPoints[this.freeDrawPoints.length - 1];
+        const distance = Math.hypot(
+          world.x - lastPoint.x,
+          world.y - lastPoint.y,
+        );
+        if (distance >= FREE_DRAW_MIN_POINT_DISTANCE) {
+          this.freeDrawPoints.push(world);
+        }
+      }
+      this.lastWorld = world;
+      this.lastScreen = screen;
+      return;
+    }
+
     if (this.mode === "moving") {
       const initialSelection = this.movingSelectionInitial;
       if (!initialSelection?.length || !this.dragStartWorld) {
@@ -360,6 +429,18 @@ export class BoardController {
   onPointerUp(options: { additiveSelection: boolean }): void {
     const board = get(this.boardStore);
 
+    if (this.mode === "free-drawing") {
+      const element = this.createFreeDrawElementFromPoints(this.freeDrawPoints);
+      if (element) {
+        const createdElementId = element.id;
+        this.boardStore.update((currentBoard) => {
+          currentBoard.addElement(element);
+          return currentBoard;
+        });
+        this.selectSingleElement(createdElementId);
+      }
+    }
+
     if (this.mode === "box-select" && this.boxSelectionRect) {
       const selectedIds = options.additiveSelection
         ? new Set(get(this.selectedElementIdsStore))
@@ -381,6 +462,7 @@ export class BoardController {
     this.boxSelectionRect = null;
     this.activeResize = null;
     this.movingSelectionInitial = null;
+    this.freeDrawPoints = null;
   }
 
   createElement(type: CreatableElement, position: Point): void {
@@ -919,6 +1001,40 @@ export class BoardController {
     this.boardStore.update((board) => {
       board.setSelectionByIds(selectedIds);
       return board;
+    });
+  }
+
+  private createFreeDrawElementFromPoints(
+    points: Point[] | null,
+  ): FreeDrawElement | null {
+    if (!points || points.length < 2) {
+      return null;
+    }
+
+    const minX = Math.min(...points.map((point) => point.x));
+    const maxX = Math.max(...points.map((point) => point.x));
+    const minY = Math.min(...points.map((point) => point.y));
+    const maxY = Math.max(...points.map((point) => point.y));
+
+    const rawWidth = maxX - minX;
+    const rawHeight = maxY - minY;
+    const width = Math.max(1, rawWidth);
+    const height = Math.max(1, rawHeight);
+
+    const normalizedPoints = points.map((point) => ({
+      x: rawWidth <= 0 ? 0.5 : (point.x - minX) / rawWidth,
+      y: rawHeight <= 0 ? 0.5 : (point.y - minY) / rawHeight,
+    }));
+
+    return new FreeDrawElement({
+      id: crypto.randomUUID(),
+      x: minX,
+      y: minY,
+      width,
+      height,
+      points: normalizedPoints,
+      strokeWidth: this.freeDrawStrokeWidth,
+      strokeColor: this.freeDrawColor,
     });
   }
 

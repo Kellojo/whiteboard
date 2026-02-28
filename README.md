@@ -9,6 +9,8 @@ Whiteboards with shapes, sticky notes, text, images and icons. Deployable as a s
 ## ✨ Features
 
 - 🟦 Draw shapes, add sticky notes, text, images and icons
+- ✏️ Edit and move elements around the board
+- 🖌️ Pencil freeform drawing
 - 🖼️ Copy/paste and drag/drop support for images
 - 🎨 Customizable text color, font weight, alignment, ...
 - 🧩 Custom icon browser with 1000+ icons from [lucide icons](https://github.com/lucide-icons/lucide)

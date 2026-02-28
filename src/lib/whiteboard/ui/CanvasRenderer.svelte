@@ -84,6 +84,8 @@
       element.draw(ctx);
     }
 
+    drawFreeDrawPreview(ctx);
+
     drawOverlayRect(
       ctx,
       controller.getSelectionRect(),
@@ -109,6 +111,27 @@
       ctx.strokeRect(handle.x - size / 2, handle.y - size / 2, size, size);
       ctx.restore();
     }
+  }
+
+  function drawFreeDrawPreview(ctx: CanvasRenderingContext2D) {
+    const previewPoints = controller.getFreeDrawPreviewPoints();
+    if (!previewPoints || previewPoints.length < 2) {
+      return;
+    }
+
+    ctx.save();
+    ctx.strokeStyle = controller.getFreeDrawColor();
+    ctx.lineWidth = controller.getFreeDrawStrokeWidth();
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    ctx.moveTo(previewPoints[0].x, previewPoints[0].y);
+    for (let index = 1; index < previewPoints.length; index += 1) {
+      const point = previewPoints[index];
+      ctx.lineTo(point.x, point.y);
+    }
+    ctx.stroke();
+    ctx.restore();
   }
 
   function drawOverlayRect(

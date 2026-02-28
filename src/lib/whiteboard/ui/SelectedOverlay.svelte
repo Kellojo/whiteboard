@@ -10,6 +10,7 @@
   import typeIcon from "@iconify-icons/lucide/type";
   import boldIcon from "@iconify-icons/lucide/bold";
   import { onMount } from "svelte";
+  import ColorSwatchPicker from "./ColorSwatchPicker.svelte";
   import type {
     BoardController,
     SelectedStyleState,
@@ -52,33 +53,10 @@
     { label: "Align center", icon: alignCenterIcon, value: "center" },
     { label: "Align right", icon: alignRightIcon, value: "right" },
   ] satisfies { label: string; icon: object; value: TextAlign }[];
-
-  const HEX_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
   const defaultBorderPickerColor = DEFAULT_BORDER_PICKER_COLOR;
   const defaultFillPickerColor = DEFAULT_FILL_PICKER_COLOR;
   const defaultTextPickerColor = DEFAULT_TEXT_PICKER_COLOR;
   const defaultIconPickerColor = DEFAULT_ICON_PICKER_COLOR;
-
-  function getColorPickerValue(
-    color: string | null | undefined,
-    fallback: string,
-  ): string {
-    if (typeof color === "string" && HEX_COLOR_PATTERN.test(color)) {
-      return color;
-    }
-    return fallback;
-  }
-
-  function isCustomColorSelected(
-    color: string | null | undefined,
-    swatches: string[],
-  ): boolean {
-    if (typeof color !== "string") {
-      return false;
-    }
-    const normalizedSwatches = swatches.map((value) => value.toLowerCase());
-    return !normalizedSwatches.includes(color.toLowerCase());
-  }
 
   function toggleColorPicker(kind: "border" | "fill" | "text" | "icon") {
     openColorPicker = openColorPicker === kind ? null : kind;
@@ -98,22 +76,6 @@
       void controller.setSelectedIconColor(color);
     }
     openColorPicker = null;
-  }
-
-  function applyCustomColor(
-    kind: "border" | "fill" | "text" | "icon",
-    event: Event,
-  ) {
-    const value = (event.currentTarget as HTMLInputElement).value;
-    if (kind === "border") {
-      controller.setSelectedBorderColor(value);
-    } else if (kind === "fill") {
-      controller.setSelectedFillColor(value);
-    } else if (kind === "text") {
-      controller.setSelectedTextColor(value);
-    } else {
-      void controller.setSelectedIconColor(value);
-    }
   }
 
   function handleGlobalClick(event: MouseEvent) {
@@ -219,40 +181,16 @@
       </button>
 
       {#if openColorPicker === "text"}
-        <div class="color-popup">
-          <div class="color-grid">
-            {#each textSwatches as color}
-              <button
-                type="button"
-                class="swatch"
-                class:active={overlay.style.textColor === color}
-                style:background={color}
-                title={`Text ${color}`}
-                onclick={() => applyColorSelection("text", color)}
-              ></button>
-            {/each}
-          </div>
-          <div class="color-custom-row">
-            <span>Custom</span>
-            <label
-              class="swatch swatch-picker"
-              class:active={isCustomColorSelected(
-                overlay.style.textColor,
-                textSwatches,
-              )}
-              title="Custom text color"
-            >
-              <input
-                type="color"
-                value={getColorPickerValue(
-                  overlay.style.textColor,
-                  defaultTextPickerColor,
-                )}
-                oninput={(event) => applyCustomColor("text", event)}
-              />
-            </label>
-          </div>
-        </div>
+        <ColorSwatchPicker
+          value={overlay.style.textColor}
+          swatches={textSwatches}
+          fallbackColor={defaultTextPickerColor}
+          labelPrefix="Text"
+          customTitle="Custom text color"
+          columns={4}
+          placement="below-left"
+          onSelect={(color) => applyColorSelection("text", color)}
+        />
       {/if}
     </div>
   {/if}
@@ -271,41 +209,16 @@
       </button>
 
       {#if openColorPicker === "border"}
-        <div class="color-popup">
-          <div class="color-grid">
-            {#each borderSwatches as color}
-              <button
-                type="button"
-                class="swatch"
-                class:transparent-swatch={color === "transparent"}
-                class:active={overlay.style.borderColor === color}
-                style:background={color}
-                title={`Border ${color}`}
-                onclick={() => applyColorSelection("border", color)}
-              ></button>
-            {/each}
-          </div>
-          <div class="color-custom-row">
-            <span>Custom</span>
-            <label
-              class="swatch swatch-picker"
-              class:active={isCustomColorSelected(
-                overlay.style.borderColor,
-                borderSwatches,
-              )}
-              title="Custom border color"
-            >
-              <input
-                type="color"
-                value={getColorPickerValue(
-                  overlay.style.borderColor,
-                  defaultBorderPickerColor,
-                )}
-                oninput={(event) => applyCustomColor("border", event)}
-              />
-            </label>
-          </div>
-        </div>
+        <ColorSwatchPicker
+          value={overlay.style.borderColor}
+          swatches={borderSwatches}
+          fallbackColor={defaultBorderPickerColor}
+          labelPrefix="Border"
+          customTitle="Custom border color"
+          columns={4}
+          placement="below-left"
+          onSelect={(color) => applyColorSelection("border", color)}
+        />
       {/if}
     </div>
   {/if}
@@ -324,41 +237,16 @@
       </button>
 
       {#if openColorPicker === "fill"}
-        <div class="color-popup">
-          <div class="color-grid">
-            {#each fillSwatches as color}
-              <button
-                type="button"
-                class="swatch"
-                class:transparent-swatch={color === "transparent"}
-                class:active={overlay.style.fillColor === color}
-                style:background={color}
-                title={`Background ${color}`}
-                onclick={() => applyColorSelection("fill", color)}
-              ></button>
-            {/each}
-          </div>
-          <div class="color-custom-row">
-            <span>Custom</span>
-            <label
-              class="swatch swatch-picker"
-              class:active={isCustomColorSelected(
-                overlay.style.fillColor,
-                fillSwatches,
-              )}
-              title="Custom background color"
-            >
-              <input
-                type="color"
-                value={getColorPickerValue(
-                  overlay.style.fillColor,
-                  defaultFillPickerColor,
-                )}
-                oninput={(event) => applyCustomColor("fill", event)}
-              />
-            </label>
-          </div>
-        </div>
+        <ColorSwatchPicker
+          value={overlay.style.fillColor}
+          swatches={fillSwatches}
+          fallbackColor={defaultFillPickerColor}
+          labelPrefix="Background"
+          customTitle="Custom background color"
+          columns={4}
+          placement="below-left"
+          onSelect={(color) => applyColorSelection("fill", color)}
+        />
       {/if}
     </div>
   {/if}
@@ -377,40 +265,16 @@
       </button>
 
       {#if openColorPicker === "icon"}
-        <div class="color-popup">
-          <div class="color-grid">
-            {#each iconSwatches as color}
-              <button
-                type="button"
-                class="swatch"
-                class:active={overlay.style.iconColor === color}
-                style:background={color}
-                title={`Icon ${color}`}
-                onclick={() => applyColorSelection("icon", color)}
-              ></button>
-            {/each}
-          </div>
-          <div class="color-custom-row">
-            <span>Custom</span>
-            <label
-              class="swatch swatch-picker"
-              class:active={isCustomColorSelected(
-                overlay.style.iconColor,
-                iconSwatches,
-              )}
-              title="Custom icon color"
-            >
-              <input
-                type="color"
-                value={getColorPickerValue(
-                  overlay.style.iconColor,
-                  defaultIconPickerColor,
-                )}
-                oninput={(event) => applyCustomColor("icon", event)}
-              />
-            </label>
-          </div>
-        </div>
+        <ColorSwatchPicker
+          value={overlay.style.iconColor}
+          swatches={iconSwatches}
+          fallbackColor={defaultIconPickerColor}
+          labelPrefix="Icon"
+          customTitle="Custom icon color"
+          columns={4}
+          placement="below-left"
+          onSelect={(color) => applyColorSelection("icon", color)}
+        />
       {/if}
     </div>
   {/if}
@@ -497,130 +361,5 @@
     height: 1.875rem;
     padding: 0;
     gap: 0;
-  }
-
-  .color-popup {
-    position: absolute;
-    left: 0;
-    top: calc(100% + 0.5rem);
-    z-index: var(--z-overlay-popup);
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    padding: 0.5rem;
-    border-radius: 0.625rem;
-    border: 0.125rem solid var(--border-1);
-    background: var(--surface-1);
-    box-shadow: var(--shadow-l);
-    backdrop-filter: blur(var(--glass-blur));
-    -webkit-backdrop-filter: blur(var(--glass-blur));
-  }
-
-  .color-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.375rem;
-  }
-
-  .color-grid .swatch {
-    min-width: 1.5rem;
-    height: 1.5rem;
-  }
-
-  .color-custom-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    color: var(--app-text-muted);
-    font-size: 0.875rem;
-  }
-
-  .swatch {
-    width: 1.5rem;
-    min-width: 1.5rem;
-    height: 1.5rem;
-    padding: 0;
-  }
-
-  .swatch-picker {
-    border: 0.0625rem solid var(--border-1);
-    border-radius: 0.375rem;
-    overflow: hidden;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--button-bg);
-    cursor: pointer;
-  }
-
-  .swatch-picker:hover {
-    border-color: var(--border-2);
-    background: var(--button-bg-hover);
-  }
-
-  .swatch-picker.active {
-    outline: 0.125rem solid var(--accent);
-    outline-offset: 0.0625rem;
-  }
-
-  .swatch-picker:focus-within {
-    outline: 0.125rem solid var(--accent);
-    outline-offset: 0.0625rem;
-  }
-
-  .swatch-picker input[type="color"] {
-    appearance: none;
-    -webkit-appearance: none;
-    width: 100%;
-    height: 100%;
-    border: none;
-    padding: 0;
-    background: transparent;
-    cursor: pointer;
-  }
-
-  .swatch-picker input[type="color"]::-webkit-color-swatch-wrapper {
-    padding: 0;
-  }
-
-  .swatch-picker input[type="color"]::-webkit-color-swatch {
-    border: none;
-    border-radius: 0.3125rem;
-  }
-
-  .swatch-picker input[type="color"]::-moz-color-swatch {
-    border: none;
-    border-radius: 0.3125rem;
-  }
-
-  .transparent-swatch {
-    position: relative;
-    background-image: linear-gradient(
-        45deg,
-        var(--border-1) 25%,
-        transparent 25%
-      ),
-      linear-gradient(-45deg, var(--border-1) 25%, transparent 25%),
-      linear-gradient(45deg, transparent 75%, var(--border-1) 75%),
-      linear-gradient(-45deg, transparent 75%, var(--border-1) 75%);
-    background-size: 0.625rem 0.625rem;
-    background-position:
-      0 0,
-      0 0.3125rem,
-      0.3125rem -0.3125rem,
-      -0.3125rem 0;
-  }
-
-  .transparent-swatch::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 1rem;
-    height: 0.125rem;
-    background: var(--danger);
-    transform: translate(-50%, -50%) rotate(-35deg);
-    border-radius: 62.4375rem;
   }
 </style>

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { onMount } from "svelte";
+  import { fade, scale } from "svelte/transition";
   import Icon from "@iconify/svelte";
   import squareIcon from "@iconify-icons/lucide/square";
   import circleIcon from "@iconify-icons/lucide/circle";
@@ -10,8 +12,16 @@
   import moonIcon from "@iconify-icons/lucide/moon";
   import magnetIcon from "@iconify-icons/lucide/magnet";
   import paletteIcon from "@iconify-icons/lucide/palette";
+  import pencilIcon from "@iconify-icons/lucide/pencil";
+  import paintBucketIcon from "@iconify-icons/lucide/paint-bucket";
+  import minusIcon from "@iconify-icons/lucide/minus";
   import importIcon from "@iconify-icons/lucide/upload";
   import exportIcon from "@iconify-icons/lucide/download";
+  import ColorSwatchPicker from "./ColorSwatchPicker.svelte";
+  import {
+    DEFAULT_DRAW_PICKER_COLOR,
+    DRAW_COLOR_SWATCHES,
+  } from "./colorSwatches";
 
   export type CreateKind =
     | "rectangle"
@@ -24,6 +34,12 @@
     onBack,
     onCreate,
     onDelete,
+    freeDrawMode,
+    freeDrawColor,
+    freeDrawStrokeWidth,
+    onToggleFreeDrawMode,
+    onSetFreeDrawColor,
+    onSetFreeDrawStrokeWidth,
     iconBrowserOpen,
     onToggleIconBrowser,
     snapEnabled,
@@ -36,6 +52,12 @@
     onBack?: () => void;
     onCreate: (kind: CreateKind) => void;
     onDelete: () => void;
+    freeDrawMode: boolean;
+    freeDrawColor: string;
+    freeDrawStrokeWidth: number;
+    onToggleFreeDrawMode: () => void;
+    onSetFreeDrawColor: (color: string) => void;
+    onSetFreeDrawStrokeWidth: (width: number) => void;
     iconBrowserOpen: boolean;
     onToggleIconBrowser: () => void;
     snapEnabled: boolean;
@@ -54,6 +76,61 @@
     { label: "Rectangle", icon: squareIcon, kind: "rectangle" },
     { label: "Ellipse", icon: circleIcon, kind: "ellipse" },
   ] satisfies { label: string; icon: object; kind: CreateKind }[];
+
+  let openDrawColorPicker = $state(false);
+  let openDrawWidthPicker = $state(false);
+  const drawWidthPresets = [2, 4, 6, 8];
+  const drawColorSwatches = DRAW_COLOR_SWATCHES;
+  const defaultDrawPickerColor = DEFAULT_DRAW_PICKER_COLOR;
+
+  function handleGlobalClick(event: MouseEvent) {
+    if (!openDrawColorPicker && !openDrawWidthPicker) {
+      return;
+    }
+
+    if (!(event.target instanceof Element)) {
+      openDrawColorPicker = false;
+      return;
+    }
+
+    if (event.target.closest(".draw-color-picker-host")) {
+      return;
+    }
+
+    if (event.target.closest(".draw-width-picker-host")) {
+      return;
+    }
+
+    openDrawColorPicker = false;
+    openDrawWidthPicker = false;
+  }
+
+  function handleGlobalKeydown(event: KeyboardEvent) {
+    if (
+      event.key === "Escape" &&
+      (openDrawColorPicker || openDrawWidthPicker)
+    ) {
+      openDrawColorPicker = false;
+      openDrawWidthPicker = false;
+    }
+  }
+
+  onMount(() => {
+    window.addEventListener("click", handleGlobalClick);
+    window.addEventListener("keydown", handleGlobalKeydown);
+
+    return () => {
+      window.removeEventListener("click", handleGlobalClick);
+      window.removeEventListener("keydown", handleGlobalKeydown);
+    };
+  });
+
+  $effect(() => {
+    if (!freeDrawMode) {
+      openDrawColorPicker = false;
+      openDrawWidthPicker = false;
+    }
+  });
 </script>
 
 <div class="toolbar">
@@ -113,6 +190,115 @@
     </label>
   </div>
   <div class="tools">
+    <div class="pen-group" class:open={freeDrawMode}>
+      <button
+        type="button"
+        class="tool-button"
+        class:active={freeDrawMode}
+        aria-label={freeDrawMode ? "Disable drawing" : "Enable drawing"}
+        title={freeDrawMode ? "Drawing on" : "Draw freehand"}
+        onclick={onToggleFreeDrawMode}
+      >
+        <Icon icon={pencilIcon} width="22" height="22" />
+      </button>
+      <div
+        class="draw-controls"
+        class:open={freeDrawMode}
+        aria-hidden={!freeDrawMode}
+      >
+        <div class="draw-width-picker-host">
+          <button
+            type="button"
+            class="tool-button width-trigger"
+            class:active={openDrawWidthPicker}
+            aria-label="Drawing width"
+            title={`Drawing width ${freeDrawStrokeWidth}px`}
+            onclick={() => {
+              openDrawWidthPicker = !openDrawWidthPicker;
+              openDrawColorPicker = false;
+            }}
+          >
+            <Icon icon={minusIcon} width="18" height="18" />
+            <span class="draw-width-chip">{freeDrawStrokeWidth}</span>
+          </button>
+
+          {#if openDrawWidthPicker}
+            <div
+              class="width-popup"
+              in:scale={{ duration: 120, start: 0.96 }}
+              out:fade={{ duration: 100 }}
+            >
+              <div class="width-presets">
+                {#each drawWidthPresets as width}
+                  <button
+                    type="button"
+                    class="width-preset"
+                    class:active={freeDrawStrokeWidth === width}
+                    onclick={() => {
+                      onSetFreeDrawStrokeWidth(width);
+                    }}
+                  >
+                    {width}
+                  </button>
+                {/each}
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="16"
+                step="1"
+                value={freeDrawStrokeWidth}
+                aria-label="Draw stroke width"
+                oninput={(event) => {
+                  const value = Number(
+                    (event.currentTarget as HTMLInputElement).value,
+                  );
+                  onSetFreeDrawStrokeWidth(value);
+                }}
+              />
+            </div>
+          {/if}
+        </div>
+
+        <div class="draw-color-picker-host">
+          <button
+            type="button"
+            class="tool-button color-trigger"
+            class:active={openDrawColorPicker}
+            aria-label="Drawing color"
+            title="Drawing color"
+            onclick={() => {
+              openDrawColorPicker = !openDrawColorPicker;
+              openDrawWidthPicker = false;
+            }}
+          >
+            <Icon icon={paintBucketIcon} width="18" height="18" />
+            <span class="draw-color-chip" style:background={freeDrawColor}
+            ></span>
+          </button>
+
+          {#if openDrawColorPicker}
+            <ColorSwatchPicker
+              value={freeDrawColor}
+              swatches={drawColorSwatches}
+              fallbackColor={defaultDrawPickerColor}
+              labelPrefix="Draw"
+              customTitle="Custom drawing color"
+              columns={8}
+              placement="above-center"
+              compact={true}
+              onSelect={(color) => {
+                onSetFreeDrawColor(color);
+                openDrawColorPicker = false;
+              }}
+            />
+          {/if}
+        </div>
+      </div>
+    </div>
+
+    <div class="tool-separator" aria-hidden="true"></div>
+
     {#each createButtons as button}
       <button
         type="button"
@@ -137,9 +323,11 @@
     </button>
   </div>
 </div>
-<p class="hint">
-  Pan with Alt + drag (or middle mouse drag). Copy/paste with Ctrl+C / Ctrl+V.
-</p>
+{#if !freeDrawMode}
+  <p class="hint">
+    Pan with Alt + drag (or middle mouse drag). Copy/paste with Ctrl+C / Ctrl+V.
+  </p>
+{/if}
 
 <style>
   .toolbar {
@@ -216,6 +404,129 @@
     width: 2.625rem;
     height: 2.625rem;
     padding: 0;
+  }
+
+  .draw-controls {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+    transition:
+      max-width 220ms ease,
+      opacity 140ms ease,
+      gap 220ms ease;
+  }
+
+  .draw-controls.open {
+    gap: 0.5rem;
+    max-width: 9rem;
+    opacity: 1;
+    overflow: visible;
+    pointer-events: auto;
+  }
+
+  .pen-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    transition: gap 220ms ease;
+  }
+
+  .pen-group.open {
+    gap: 0.5rem;
+  }
+
+  .tool-separator {
+    width: 0.0625rem;
+    align-self: stretch;
+    background: var(--border-1);
+    opacity: 0.9;
+    margin: 0 0.125rem;
+  }
+
+  .draw-color-picker-host {
+    position: relative;
+  }
+
+  .draw-width-picker-host {
+    position: relative;
+  }
+
+  .color-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    width: auto;
+    min-width: 2.625rem;
+    padding: 0 0.5rem;
+  }
+
+  .draw-color-chip {
+    width: 0.875rem;
+    height: 0.875rem;
+    border-radius: 9999px;
+    border: 0.0625rem solid var(--border-2);
+    flex: 0 0 auto;
+  }
+
+  .width-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    width: auto;
+    min-width: 2.625rem;
+    padding: 0 0.5rem;
+  }
+
+  .draw-width-chip {
+    min-width: 1.125rem;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--app-text-muted);
+  }
+
+  .width-popup {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 0.5rem);
+    transform: translateX(-50%);
+    z-index: calc(var(--z-static-toolbar) + 1);
+    min-width: 10.5rem;
+    padding: 0.5rem;
+    border-radius: 0.625rem;
+    border: 0.0625rem solid var(--border-1);
+    background: var(--surface-1);
+    box-shadow: var(--shadow-l);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .width-presets {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.25rem;
+  }
+
+  .width-preset {
+    height: 1.75rem;
+    padding: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .width-popup input[type="range"] {
+    display: block;
+    width: 100%;
+    margin: 0;
   }
 
   .tool-button.active {

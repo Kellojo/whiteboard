@@ -35,6 +35,9 @@
   let isEditingBoardName = $state(false);
   let boardNameInput = $state<HTMLInputElement | null>(null);
   let iconBrowserOpen = $state(false);
+  let freeDrawMode = $state(false);
+  let freeDrawColor = $state(controller.getFreeDrawColor());
+  let freeDrawStrokeWidth = $state(controller.getFreeDrawStrokeWidth());
   let snapEnabled = $state(true);
   let isBoardLoading = $state(false);
   let autosaveTimer = $state<ReturnType<typeof setTimeout> | null>(null);
@@ -168,6 +171,8 @@
   }
 
   function handleCreate(kind: CreateKind) {
+    freeDrawMode = false;
+    controller.setFreeDrawEnabled(false);
     const currentViewport = get(viewport);
     const centerWorld = {
       x: window.innerWidth / 2 / currentViewport.zoom - currentViewport.offsetX,
@@ -179,6 +184,21 @@
 
   function handleDelete() {
     controller.deleteSelection();
+  }
+
+  function handleToggleFreeDrawMode() {
+    freeDrawMode = !freeDrawMode;
+    controller.setFreeDrawEnabled(freeDrawMode);
+  }
+
+  function handleSetFreeDrawColor(color: string) {
+    freeDrawColor = color;
+    controller.setFreeDrawColor(color);
+  }
+
+  function handleSetFreeDrawStrokeWidth(width: number) {
+    freeDrawStrokeWidth = width;
+    controller.setFreeDrawStrokeWidth(width);
   }
 
   function startBoardNameEdit() {
@@ -725,6 +745,12 @@
     onBack={boardId ? handleBack : undefined}
     onCreate={handleCreate}
     onDelete={handleDelete}
+    {freeDrawMode}
+    {freeDrawColor}
+    {freeDrawStrokeWidth}
+    onToggleFreeDrawMode={handleToggleFreeDrawMode}
+    onSetFreeDrawColor={handleSetFreeDrawColor}
+    onSetFreeDrawStrokeWidth={handleSetFreeDrawStrokeWidth}
     {iconBrowserOpen}
     onToggleIconBrowser={handleToggleIconBrowser}
     {snapEnabled}

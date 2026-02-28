@@ -33,4 +33,7 @@ export interface CanvasElementJSON {
   iconId?: string;
   iconColor?: string;
   videoUrl?: string;
+  points?: Point[];
+  strokeWidth?: number;
+  strokeColor?: string;
 }
