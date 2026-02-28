@@ -10,7 +10,7 @@ Whiteboards with shapes, sticky notes, text, images and icons. Deployable as a s
 - 🗂️ Manage multiple boards
 - 🔗 Share links to specific boards
 - 📦 Import/export individual boards as JSON files
-- 🐳 Deployable as a simple docker container
+- 🐳 Deployable as a simple docker container (boards are stored as a JSON file)
 
 ## 🚫 Currently does not support
 
