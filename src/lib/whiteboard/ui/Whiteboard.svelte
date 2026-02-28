@@ -31,6 +31,9 @@
   let cursorWorld: Point = { x: 0, y: 0 };
   let themeMode = $state<"light" | "dark">("dark");
   let boardName = $state("Untitled board");
+  let boardNameDraft = $state("");
+  let isEditingBoardName = $state(false);
+  let boardNameInput = $state<HTMLInputElement | null>(null);
   let iconBrowserOpen = $state(false);
   let snapEnabled = $state(true);
   let isBoardLoading = $state(false);
@@ -178,6 +181,59 @@
     controller.deleteSelection();
   }
 
+  function startBoardNameEdit() {
+    boardNameDraft = boardName;
+    isEditingBoardName = true;
+    tick().then(() => {
+      boardNameInput?.focus();
+      boardNameInput?.select();
+    });
+  }
+
+  function cancelBoardNameEdit() {
+    isEditingBoardName = false;
+    boardNameDraft = boardName;
+  }
+
+  async function commitBoardNameEdit() {
+    if (!isEditingBoardName) {
+      return;
+    }
+
+    const trimmed = boardNameDraft.trim();
+    const nextName = trimmed.length > 0 ? trimmed : "Untitled board";
+    isEditingBoardName = false;
+
+    if (nextName === boardName) {
+      return;
+    }
+
+    if (!boardId) {
+      boardName = nextName;
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/boards/${boardId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: nextName }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to rename board");
+      }
+
+      const result = (await response.json()) as {
+        board?: { name?: string };
+      };
+      boardName = result.board?.name?.trim() || nextName;
+      boardNameDraft = boardName;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   function handleToggleIconBrowser() {
     iconBrowserOpen = !iconBrowserOpen;
   }
@@ -239,6 +295,16 @@
   }
 
   function handleKeydown(event: KeyboardEvent) {
+    if (event.target instanceof HTMLElement && event.target.isContentEditable) {
+      return;
+    }
+    if (event.target instanceof HTMLInputElement) {
+      return;
+    }
+    if (event.target instanceof HTMLTextAreaElement) {
+      return;
+    }
+
     if (event.key === "Escape" && interactiveVideoId) {
       interactiveVideoId = null;
       return;
@@ -619,7 +685,35 @@
 </script>
 
 <section class="whiteboard-shell">
-  <div class="board-title" title={boardName}>{boardName}</div>
+  {#if isEditingBoardName}
+    <input
+      class="board-title board-title-input"
+      bind:this={boardNameInput}
+      bind:value={boardNameDraft}
+      maxlength="80"
+      onblur={commitBoardNameEdit}
+      onkeydown={(event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          void commitBoardNameEdit();
+          return;
+        }
+        if (event.key === "Escape") {
+          event.preventDefault();
+          cancelBoardNameEdit();
+        }
+      }}
+    />
+  {:else}
+    <button
+      type="button"
+      class="board-title board-title-button"
+      title="Click to rename board"
+      onclick={startBoardNameEdit}
+    >
+      {boardName}
+    </button>
+  {/if}
 
   {#if isBoardLoading}
     <div class="board-loading">Loading board...</div>
@@ -941,6 +1035,20 @@
     box-shadow: var(--shadow-l);
     backdrop-filter: blur(var(--glass-blur));
     -webkit-backdrop-filter: blur(var(--glass-blur));
+  }
+
+  .board-title-button {
+    cursor: text;
+    text-align: center;
+  }
+
+  .board-title-input {
+    outline: none;
+    text-align: center;
+  }
+
+  .board-title-input:focus {
+    border-color: var(--border-2);
   }
 
   .video-overlay {
