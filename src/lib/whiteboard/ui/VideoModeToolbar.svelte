@@ -41,26 +41,28 @@
   .video-mode-toolbar {
     position: absolute;
     transform: translateX(-50%);
-    z-index: 55;
+    z-index: var(--z-overlay);
     display: inline-flex;
     align-items: center;
     background: var(--surface-1);
-    border: 1px solid var(--border-1);
-    border-radius: 10px;
-    padding: 6px;
-    box-shadow: var(--shadow-m);
+    border: 0.125rem solid var(--border-1);
+    border-radius: 0.625rem;
+    padding: 0.375rem;
+    box-shadow: var(--shadow-l);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
   }
 
   .video-mode-toolbar button {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    border: 1px solid var(--border-1);
+    gap: 0.375rem;
+    border: 0.0625rem solid var(--border-1);
     background: var(--button-bg);
     color: var(--button-text);
-    border-radius: 8px;
-    padding: 6px 10px;
-    font-size: 12px;
+    border-radius: 0.5rem;
+    padding: 0.375rem 0.625rem;
+    font-size: 0.75rem;
     cursor: pointer;
   }
 
@@ -70,7 +72,7 @@
   }
 
   .video-mode-toolbar button.active {
-    outline: 2px solid var(--accent);
-    outline-offset: 1px;
+    outline: 0.125rem solid var(--accent);
+    outline-offset: 0.0625rem;
   }
 </style>

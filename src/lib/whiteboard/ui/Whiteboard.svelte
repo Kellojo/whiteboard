@@ -728,61 +728,68 @@
     position: fixed;
     top: 1rem;
     right: 1rem;
-    z-index: 100;
-    border: 1px solid var(--border-1);
+    z-index: var(--z-static-status);
+    border: 0.125rem solid var(--border-1);
     background: var(--surface-1);
     color: var(--app-text-muted);
-    border-radius: 10px;
-    padding: 6px 10px;
-    font-size: 12px;
+    border-radius: 0.625rem;
+    padding: 0.375rem 0.625rem;
+    font-size: 0.75rem;
+    box-shadow: var(--shadow-l);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
   }
 
   .layers-panel {
     position: fixed;
     top: 1rem;
     right: 1rem;
-    z-index: 40;
-    width: min(320px, 32vw);
+    z-index: var(--z-static-layers);
+    width: min(20rem, 32vw);
     max-height: calc(100vh - 2rem);
     overflow: auto;
-    border: 1px solid var(--border-1);
+    border: 0.125rem solid var(--border-1);
     background: var(--surface-1);
-    border-radius: 12px;
-    box-shadow: var(--shadow-m);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-l);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
   }
 
   .layers-header {
     position: sticky;
     top: 0;
-    z-index: 1;
-    padding: 10px 12px;
-    font-size: 13px;
+    z-index: var(--z-board-content);
+    padding: 1rem;
+    font-size: 1rem;
     font-weight: 600;
-    border-bottom: 1px solid var(--border-1);
+    border-bottom: 0.0625rem solid var(--border-1);
     background: var(--surface-1);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
   }
 
   .layers-empty {
     margin: 0;
-    padding: 12px;
-    font-size: 12px;
+    padding: 0.75rem;
+    font-size: 0.75rem;
     color: var(--app-text-muted);
   }
 
   .layers-list {
-    padding: 8px;
+    padding: 1rem;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 0.5rem;
   }
 
   .layer-row {
     display: grid;
     grid-template-columns: 1fr auto;
-    gap: 6px;
-    border: 1px solid var(--border-1);
-    border-radius: 8px;
-    background: var(--surface-1);
+    gap: 0.375rem;
+    border: 0.0625rem solid var(--border-1);
+    border-radius: 0.5rem;
+    background: var(--backgroundLight);
   }
 
   .layer-row.selected {
@@ -793,17 +800,17 @@
     border: none;
     background: transparent;
     color: var(--app-text);
-    padding: 8px;
+    padding: 0.5rem;
     text-align: left;
     cursor: pointer;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 0.125rem;
     min-width: 0;
   }
 
   .layer-title {
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
@@ -811,26 +818,26 @@
   }
 
   .layer-type {
-    font-size: 11px;
+    font-size: 0.6875rem;
     color: var(--app-text-muted);
     text-transform: capitalize;
   }
 
   .layer-actions {
     display: grid;
-    grid-template-columns: repeat(2, 28px);
-    grid-template-rows: repeat(2, 28px);
-    gap: 4px;
-    padding: 6px;
+    grid-template-columns: repeat(2, 1.75rem);
+    grid-template-rows: repeat(2, 1.75rem);
+    gap: 0.25rem;
+    padding: 0.375rem;
   }
 
   .layer-actions button {
-    border: 1px solid var(--border-1);
+    border: 0.0625rem solid var(--border-1);
     background: var(--button-bg);
     color: var(--button-text);
-    border-radius: 6px;
-    width: 28px;
-    height: 28px;
+    border-radius: 0.375rem;
+    width: 1.75rem;
+    height: 1.75rem;
     padding: 0;
     cursor: pointer;
     display: inline-flex;
@@ -853,26 +860,28 @@
     top: 2rem;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 90;
-    max-width: min(70vw, 680px);
+    z-index: var(--z-static-title);
+    max-width: min(70vw, 42.5rem);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    border: 1px solid var(--border-1);
+    border: 0.125rem solid var(--border-1);
     background: var(--surface-1);
     color: var(--app-text);
-    border-radius: 10px;
-    padding: 6px 12px;
+    border-radius: 0.625rem;
+    padding: 0.5rem;
     font-size: 1rem;
     font-weight: 600;
-    box-shadow: var(--shadow-s);
+    box-shadow: var(--shadow-l);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
   }
 
   .video-overlay {
     position: absolute;
     overflow: hidden;
-    border-radius: 10px;
-    border: 1px solid var(--border-2);
+    border-radius: 0.625rem;
+    border: 0.0625rem solid var(--border-2);
     background: #000;
     box-shadow: var(--shadow-m);
     pointer-events: none;

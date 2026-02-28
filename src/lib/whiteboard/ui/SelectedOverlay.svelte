@@ -360,39 +360,41 @@
   .selected-toolbar {
     position: absolute;
     transform: translateX(-50%);
-    z-index: 50;
+    z-index: var(--z-overlay);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 0.5rem;
     background: var(--surface-1);
-    border: 1px solid var(--border-1);
-    border-radius: 10px;
-    padding: 6px;
-    box-shadow: var(--shadow-m);
+    border: 0.125rem solid var(--border-1);
+    border-radius: 0.625rem;
+    padding: 0.5rem;
+    box-shadow: var(--shadow-l);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
   }
 
   .mini-group {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 0.375rem;
   }
 
   .mini-group:not(:last-child)::after {
     content: "";
-    width: 1px;
-    height: 22px;
-    margin-left: 2px;
+    width: 0.0625rem;
+    height: 1.375rem;
+    margin-left: 0.125rem;
     background: var(--border-1);
   }
 
   .mini-group button {
-    border: 1px solid var(--border-1);
+    border: 0.0625rem solid var(--border-1);
     background: var(--button-bg);
     color: var(--button-text);
-    border-radius: 6px;
-    min-width: 30px;
-    height: 30px;
-    font-size: 12px;
+    border-radius: 0.375rem;
+    min-width: 1.875rem;
+    height: 1.875rem;
+    font-size: 0.75rem;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
@@ -411,19 +413,19 @@
   }
 
   .font-size-group {
-    gap: 4px;
+    gap: 0.25rem;
   }
 
   .font-size-value {
-    min-width: 28px;
+    min-width: 1.75rem;
     text-align: center;
-    font-size: 12px;
+    font-size: 0.75rem;
     color: var(--app-text-muted);
   }
 
   .mini-group button.active {
-    outline: 2px solid var(--accent);
-    outline-offset: 1px;
+    outline: 0.125rem solid var(--accent);
+    outline-offset: 0.0625rem;
   }
 
   .color-picker-host {
@@ -431,8 +433,8 @@
   }
 
   .color-trigger {
-    min-width: 30px;
-    height: 30px;
+    min-width: 1.875rem;
+    height: 1.875rem;
     padding: 0;
     gap: 0;
   }
@@ -440,22 +442,24 @@
   .color-popup {
     position: absolute;
     left: 0;
-    top: calc(100% + 8px);
-    z-index: 70;
+    top: calc(100% + 0.5rem);
+    z-index: var(--z-overlay-popup);
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 8px;
-    border-radius: 10px;
-    border: 1px solid var(--border-1);
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 0.625rem;
+    border: 0.125rem solid var(--border-1);
     background: var(--surface-1);
-    box-shadow: var(--shadow-m);
+    box-shadow: var(--shadow-l);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
   }
 
   .color-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
+    gap: 0.375rem;
   }
 
   .color-grid .swatch {
@@ -467,7 +471,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    gap: 0.5rem;
     color: var(--app-text-muted);
     font-size: 0.875rem;
   }
@@ -480,8 +484,8 @@
   }
 
   .swatch-picker {
-    border: 1px solid var(--border-1);
-    border-radius: 6px;
+    border: 0.0625rem solid var(--border-1);
+    border-radius: 0.375rem;
     overflow: hidden;
     display: inline-flex;
     align-items: center;
@@ -496,13 +500,13 @@
   }
 
   .swatch-picker.active {
-    outline: 2px solid var(--accent);
-    outline-offset: 1px;
+    outline: 0.125rem solid var(--accent);
+    outline-offset: 0.0625rem;
   }
 
   .swatch-picker:focus-within {
-    outline: 2px solid var(--accent);
-    outline-offset: 1px;
+    outline: 0.125rem solid var(--accent);
+    outline-offset: 0.0625rem;
   }
 
   .swatch-picker input[type="color"] {
@@ -522,12 +526,12 @@
 
   .swatch-picker input[type="color"]::-webkit-color-swatch {
     border: none;
-    border-radius: 5px;
+    border-radius: 0.3125rem;
   }
 
   .swatch-picker input[type="color"]::-moz-color-swatch {
     border: none;
-    border-radius: 5px;
+    border-radius: 0.3125rem;
   }
 
   .transparent-swatch {
@@ -540,12 +544,12 @@
       linear-gradient(-45deg, var(--border-1) 25%, transparent 25%),
       linear-gradient(45deg, transparent 75%, var(--border-1) 75%),
       linear-gradient(-45deg, transparent 75%, var(--border-1) 75%);
-    background-size: 10px 10px;
+    background-size: 0.625rem 0.625rem;
     background-position:
       0 0,
-      0 5px,
-      5px -5px,
-      -5px 0;
+      0 0.3125rem,
+      0.3125rem -0.3125rem,
+      -0.3125rem 0;
   }
 
   .transparent-swatch::after {
@@ -554,9 +558,9 @@
     left: 50%;
     top: 50%;
     width: 1rem;
-    height: 2px;
+    height: 0.125rem;
     background: var(--danger);
     transform: translate(-50%, -50%) rotate(-35deg);
-    border-radius: 999px;
+    border-radius: 62.4375rem;
   }
 </style>

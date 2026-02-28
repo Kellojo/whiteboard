@@ -206,12 +206,12 @@
 <style>
   .inline-text-editor {
     position: absolute;
-    z-index: 60;
+    z-index: var(--z-overlay);
     resize: none;
     box-sizing: border-box;
-    border: 1px solid;
+    border: 0.0625rem solid;
     border-radius: 0;
-    padding: 6px 8px 0 8px;
+    padding: 0.375rem 0.5rem 0 0.5rem;
     line-height: 1.3;
     outline: none;
     font-family: Inter, system-ui, sans-serif;

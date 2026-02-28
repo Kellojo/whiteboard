@@ -1,49 +1,51 @@
 :root,
 :root[data-theme="dark"] {
-  --app-bg: hsl(225 18% 7%);
-  --app-text: hsl(220 25% 92%);
-  --app-text-muted: hsl(220 10% 68%);
+  --primaryText: hsl(0, 0%, 90%);
+  --secondaryText: hsl(0, 0%, 60%);
+  --backgroundDark: hsl(0, 0%, 0%);
+  --background: hsla(0, 0%, 5%, 0.5);
+  --backgroundTextContrastShadow: hsla(0, 0%, 5%, 0.25);
+  --backgroundLight: hsl(0, 0%, 10%);
+  --borderColor: hsla(0, 0%, 15%, 0.9);
+  --borderHoverColor: hsla(0, 0%, 25%, 0.9);
 
-  --surface-1: hsl(222 18% 10% / 0.94);
-  --surface-2: hsl(222 16% 14% / 0.96);
-  --surface-inset: hsl(222 22% 8% / 0.75);
+  --app-bg: var(--backgroundDark);
+  --app-text: var(--primaryText);
+  --app-text-muted: var(--secondaryText);
 
-  --border-1: hsl(220 16% 24% / 0.9);
-  --border-2: hsl(220 16% 34% / 0.9);
+  --surface-1: var(--background);
+  --surface-2: var(--backgroundLight);
+  --surface-inset: var(--background);
 
-  --button-bg: hsl(221 20% 16%);
-  --button-bg-hover: hsl(221 20% 22%);
-  --button-text: hsl(220 25% 92%);
+  --border-1: var(--borderColor);
+  --border-2: var(--borderHoverColor);
+
+  --button-bg: var(--backgroundLight);
+  --button-bg-hover: hsla(0, 0%, 20%, 0.9);
+  --button-text: var(--primaryText);
 
   --accent: hsl(217 92% 62%);
   --accent-strong: hsl(217 92% 70%);
   --danger: hsl(0 78% 63%);
 
-  --canvas-bg: hsl(222 24% 10%);
-  --canvas-grid: hsl(221 16% 20%);
-  --handle-fill: hsl(222 24% 96%);
+  --canvas-bg: hsl(0 0% 7%);
+  --canvas-grid: hsla(0 0% 100% / 0.08);
+  --handle-fill: hsl(0 0% 92%);
 
-  --shadow-highlight: hsla(0, 0%, 100%, 0.08);
+  --shadow-highlight: hsla(0, 0%, 100%, 15%);
   --shadow-dark: hsla(0, 0%, 0%, 0.3);
-  --shadow-mid: hsla(0, 0%, 0%, 0.2);
+  --shadow-mid: hsla(0, 0%, 0%, 15%);
   --shadow-s:
-    inset 0 1px 2px var(--shadow-highlight), 0 1px 2px var(--shadow-dark),
-    0 2px 4px var(--shadow-mid);
+    inset 0 0.0625rem 0.125rem var(--shadow-highlight),
+    0 0.0625rem 0.125rem var(--shadow-dark),
+    0 0.125rem 0.25rem var(--shadow-mid);
   --shadow-m:
-    inset 0 1px 2px var(--shadow-highlight), 0 2px 4px var(--shadow-dark),
-    0 4px 8px var(--shadow-mid);
+    inset 0 0.0625rem 0.125rem var(--shadow-highlight),
+    0 0.125rem 0.25rem var(--shadow-dark), 0 0.25rem 0.5rem var(--shadow-mid);
   --shadow-l:
-    inset 0 1px 2px var(--shadow-highlight), 0 4px 6px var(--shadow-dark),
-    0 6px 10px var(--shadow-mid);
-
-  --primaryText: var(--app-text);
-  --secondaryText: var(--app-text-muted);
-  --backgroundDark: var(--surface-1);
-  --background: var(--surface-inset);
-  --backgroundTextContrastShadow: hsla(0, 0%, 0%, 0.3);
-  --backgroundLight: var(--surface-2);
-  --borderColor: var(--border-1);
-  --borderHoverColor: var(--border-2);
+    inset 0 0.0625rem 0.125rem var(--shadow-highlight),
+    0 0.25rem 0.375rem var(--shadow-dark), 0 0.375rem 0.625rem var(--shadow-mid);
+  --glass-blur: 0.875rem;
 
   --success: hsl(108, 60%, 57%);
   --successSecondary: hsl(108, 60%, 17%);
@@ -54,18 +56,27 @@
   --info: hsl(204, 100%, 50%);
   --infoSecondary: hsl(204, 100%, 15%);
 
-  --cellSize: 128px;
+  --cellSize: 8rem;
   --cellGap: 1rem;
 }
 
 :root[data-theme="light"] {
+  --primaryText: hsl(222 47% 11%);
+  --secondaryText: hsl(215 16% 40%);
+  --backgroundDark: hsl(0 0% 100% / 0.92);
+  --background: hsl(220 14% 96% / 0.72);
+  --backgroundTextContrastShadow: hsla(222, 35%, 12%, 0.18);
+  --backgroundLight: hsl(210 40% 98% / 0.98);
+  --borderColor: hsl(215 20% 84% / 0.95);
+  --borderHoverColor: hsl(215 18% 74% / 0.95);
+
   --app-bg: hsl(210 30% 97%);
   --app-text: hsl(222 47% 11%);
   --app-text-muted: hsl(215 16% 40%);
 
-  --surface-1: hsl(0 0% 100% / 0.96);
-  --surface-2: hsl(210 40% 98% / 0.98);
-  --surface-inset: hsl(220 14% 96% / 0.88);
+  --surface-1: var(--background);
+  --surface-2: var(--backgroundLight);
+  --surface-inset: var(--background);
 
   --border-1: hsl(215 20% 84% / 0.95);
   --border-2: hsl(215 18% 74% / 0.95);
@@ -85,9 +96,19 @@
   --shadow-highlight: hsla(0, 0%, 100%, 0.9);
   --shadow-dark: hsla(222, 35%, 12%, 0.12);
   --shadow-mid: hsla(222, 35%, 12%, 0.08);
+  --glass-blur: 0.625rem;
 }
 
 :root {
+  --z-board-content: 1;
+  --z-overlay: 10;
+  --z-overlay-popup: 11;
+  --z-static-actions: 30;
+  --z-static-toolbar: 30;
+  --z-static-layers: 40;
+  --z-static-title: 50;
+  --z-static-status: 60;
+
   min-height: 100%;
   color-scheme: dark light;
   background-color: var(--app-bg);

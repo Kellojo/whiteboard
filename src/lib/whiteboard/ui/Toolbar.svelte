@@ -107,7 +107,7 @@
     position: fixed;
     top: 1rem;
     left: 1rem;
-    z-index: 20;
+    z-index: var(--z-static-actions);
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -121,9 +121,11 @@
     padding: 1rem;
 
     border-radius: 1rem;
-    background-color: var(--backgroundDark);
-    border: 1px solid var(--borderColor);
+    background-color: var(--surface-1);
+    border: 0.125rem solid var(--borderColor);
     box-shadow: var(--shadow-l);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
   }
 
   .tools {
@@ -131,25 +133,27 @@
     left: 50%;
     bottom: 1rem;
     transform: translateX(-50%);
-    z-index: 30;
+    z-index: var(--z-static-toolbar);
     display: flex;
     gap: 0.5rem;
     padding: 1rem;
 
     border-radius: 1rem;
-    background-color: var(--backgroundDark);
-    border: 1px solid var(--borderColor);
+    background-color: var(--surface-1);
+    border: 0.125rem solid var(--borderColor);
     box-shadow: var(--shadow-l);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
   }
 
   button,
   .import-button {
-    border: 1px solid var(--border-1);
+    border: 0.0625rem solid var(--border-1);
     color: var(--button-text);
     background: var(--button-bg);
-    padding: 6px 10px;
-    font-size: 14px;
-    border-radius: 8px;
+    padding: 0.375rem 0.625rem;
+    font-size: 0.875rem;
+    border-radius: 0.5rem;
     cursor: pointer;
     transition:
       background-color 140ms ease,
@@ -170,8 +174,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 42px;
-    height: 42px;
+    width: 2.625rem;
+    height: 2.625rem;
     padding: 0;
   }
 
@@ -179,8 +183,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 2.25rem;
+    height: 2.25rem;
     padding: 0;
   }
 
@@ -188,15 +192,18 @@
     user-select: none;
     position: fixed;
     left: 50%;
-    bottom: 100px;
+    bottom: 6.25rem;
     transform: translateX(-50%);
-    z-index: 20;
+    z-index: var(--z-static-actions);
     margin: 0;
-    padding: 4px 10px;
+    padding: 0.5rem;
     font-size: 0.875rem;
     color: var(--app-text-muted);
     background: var(--surface-1);
-    border: 1px solid var(--border-1);
-    border-radius: 10px;
+    border: 0.125rem solid var(--border-1);
+    border-radius: 0.625rem;
+    box-shadow: var(--shadow-l);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
   }
 </style>
