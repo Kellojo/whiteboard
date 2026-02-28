@@ -119,6 +119,60 @@
     { label: "Align right", icon: alignRightIcon, value: "right" },
   ] satisfies { label: string; icon: object; value: TextAlign }[];
   const inlineEditorFontCalibration = 0.98;
+  let textMeasureContext: CanvasRenderingContext2D | null | undefined;
+
+  function getTextMeasureContext(): CanvasRenderingContext2D | null {
+    if (textMeasureContext !== undefined) {
+      return textMeasureContext;
+    }
+    if (typeof document === "undefined") {
+      textMeasureContext = null;
+      return textMeasureContext;
+    }
+    textMeasureContext = document.createElement("canvas").getContext("2d");
+    return textMeasureContext;
+  }
+
+  function measureWrappedLineCount(
+    text: string,
+    fontSize: number,
+    maxWidth: number,
+  ): number {
+    const context = getTextMeasureContext();
+    if (!context || maxWidth <= 0) {
+      return Math.max(1, text.split("\n").length);
+    }
+
+    context.font = `${fontSize}px Inter, system-ui, sans-serif`;
+    const paragraphs = text.split("\n");
+    let lineCount = 0;
+
+    for (const paragraph of paragraphs) {
+      if (!paragraph.length) {
+        lineCount += 1;
+        continue;
+      }
+
+      const words = paragraph.split(" ");
+      let line = "";
+
+      for (const word of words) {
+        const candidate = line ? `${line} ${word}` : word;
+        if (context.measureText(candidate).width <= maxWidth) {
+          line = candidate;
+        } else {
+          if (line) {
+            lineCount += 1;
+          }
+          line = word;
+        }
+      }
+
+      lineCount += line ? 1 : 0;
+    }
+
+    return Math.max(1, lineCount);
+  }
 
   function handleCursorWorldChange(point: Point) {
     cursorWorld = point;
@@ -486,10 +540,10 @@
     }
 
     if (
-      !style.fillColor &&
-      !style.borderColor &&
-      !style.textAlign &&
-      style.fontSize === null
+      !style.controls.fillColor &&
+      !style.controls.borderColor &&
+      !style.controls.textAlign &&
+      !style.controls.fontSize
     ) {
       return null;
     }
@@ -609,24 +663,45 @@
       inlineEditorFontCalibration;
     const lineHeight = calibratedFontSize * 1.3;
     const leadingCompensation = (lineHeight - calibratedFontSize) / 2;
+    const width = Math.max(24, textEditor.width * scale);
+    const height = Math.max(24, textEditor.height * scale);
+    const paddingX = Math.max(0, 8 * scale - borderWidth);
+    const defaultPaddingTop = Math.max(
+      0,
+      (textEditor.kind === "sticky" ? 8 : 6) * scale -
+        borderWidth -
+        leadingCompensation,
+    );
+
+    let paddingTop = defaultPaddingTop;
+    if (textEditor.kind === "sticky") {
+      const maxTextWidth = Math.max(0, width - borderWidth * 2 - paddingX * 2);
+      const lineCount = measureWrappedLineCount(
+        textEditor.text,
+        calibratedFontSize,
+        maxTextWidth,
+      );
+      const innerHeight = Math.max(0, height - borderWidth * 2);
+      const totalTextHeight = lineCount * lineHeight;
+      paddingTop = Math.max(
+        0,
+        (innerHeight - totalTextHeight) / 2 - leadingCompensation,
+      );
+    }
+
     return {
       left: (textEditor.x + $viewport.offsetX) * scale,
       top: (textEditor.y + $viewport.offsetY) * scale,
-      width: Math.max(24, textEditor.width * scale),
-      height: Math.max(24, textEditor.height * scale),
+      width,
+      height,
       fontSize: calibratedFontSize,
       textAlign: textEditor.textAlign,
       color: textEditor.textColor,
       background: textEditor.fillColor,
       borderColor: textEditor.borderColor,
       borderWidth,
-      paddingX: Math.max(0, 8 * scale - borderWidth),
-      paddingTop: Math.max(
-        0,
-        (textEditor.kind === "sticky" ? 8 : 6) * scale -
-          borderWidth -
-          leadingCompensation,
-      ),
+      paddingX,
+      paddingTop,
       lineHeight,
     };
   }
@@ -814,7 +889,7 @@
       style:left={`${selectedOverlay.x}px`}
       style:top={`${selectedOverlay.y}px`}
     >
-      {#if selectedOverlay.style.fontSize !== null}
+      {#if selectedOverlay.style.controls.fontSize && selectedOverlay.style.fontSize !== null}
         <div class="mini-group font-size-group">
           <button
             type="button"
@@ -836,7 +911,7 @@
         </div>
       {/if}
 
-      {#if selectedOverlay.style.textAlign}
+      {#if selectedOverlay.style.controls.textAlign && selectedOverlay.style.textAlign}
         <div class="mini-group">
           {#each textAlignOptions as option}
             <button
@@ -851,7 +926,7 @@
         </div>
       {/if}
 
-      {#if selectedOverlay.style.borderColor}
+      {#if selectedOverlay.style.controls.borderColor && selectedOverlay.style.borderColor}
         <div class="mini-group">
           {#each borderSwatches as color}
             <button
@@ -867,7 +942,7 @@
         </div>
       {/if}
 
-      {#if selectedOverlay.style.fillColor}
+      {#if selectedOverlay.style.controls.fillColor && selectedOverlay.style.fillColor}
         <div class="mini-group">
           {#each fillSwatches as color}
             <button

@@ -38,6 +38,12 @@ const FONT_SIZE_STEPS = [
 ] as const;
 
 export interface SelectedStyleState {
+  controls: {
+    fillColor: boolean;
+    borderColor: boolean;
+    textAlign: boolean;
+    fontSize: boolean;
+  };
   fillColor: string | null;
   borderColor: string | null;
   textAlign: TextAlign | null;
@@ -333,13 +339,14 @@ export class BoardController {
       }
 
       if (type === "sticky") {
+        const size = 160;
         board.addElement(
           new StickyNoteElement({
             id: crypto.randomUUID(),
-            x: position.x - 90,
-            y: position.y - 70,
-            width: 180,
-            height: 140,
+            x: position.x - size / 2,
+            y: position.y - size / 2,
+            width: size,
+            height: size,
             text: "Sticky note",
           }),
         );
@@ -457,7 +464,7 @@ export class BoardController {
       fillColor: hit.fillColor,
       borderColor: hit.borderColor,
       textColor: hit instanceof StickyNoteElement ? "#1f2937" : "#111827",
-      textAlign: hit.textAlign,
+      textAlign: hit instanceof StickyNoteElement ? "center" : hit.textAlign,
     };
   }
 
@@ -568,26 +575,42 @@ export class BoardController {
       return null;
     }
 
+    const controls = selected.getStyleControlOptions();
+    const fillColor =
+      "fillColor" in selected && typeof selected.fillColor === "string"
+        ? selected.fillColor
+        : null;
+    const borderColor =
+      "borderColor" in selected && typeof selected.borderColor === "string"
+        ? selected.borderColor
+        : null;
+    const hasTextAlign =
+      "textAlign" in selected &&
+      (selected.textAlign === "left" ||
+        selected.textAlign === "center" ||
+        selected.textAlign === "right");
+    const textAlign: TextAlign | null = hasTextAlign
+      ? (selected.textAlign as TextAlign)
+      : null;
+    const fontSize =
+      "fontSize" in selected && typeof selected.fontSize === "number"
+        ? selected.fontSize
+        : null;
+    const hasFillColor = fillColor !== null;
+    const hasBorderColor = borderColor !== null;
+    const hasFontSize = fontSize !== null;
+
     return {
-      fillColor:
-        "fillColor" in selected && typeof selected.fillColor === "string"
-          ? selected.fillColor
-          : null,
-      borderColor:
-        "borderColor" in selected && typeof selected.borderColor === "string"
-          ? selected.borderColor
-          : null,
-      textAlign:
-        "textAlign" in selected &&
-        (selected.textAlign === "left" ||
-          selected.textAlign === "center" ||
-          selected.textAlign === "right")
-          ? selected.textAlign
-          : null,
-      fontSize:
-        "fontSize" in selected && typeof selected.fontSize === "number"
-          ? selected.fontSize
-          : null,
+      controls: {
+        fillColor: controls.fillColor && hasFillColor,
+        borderColor: controls.borderColor && hasBorderColor,
+        textAlign: controls.textAlign && hasTextAlign,
+        fontSize: controls.fontSize && hasFontSize,
+      },
+      fillColor,
+      borderColor,
+      textAlign,
+      fontSize,
       canDecreaseFontSize: this.canAdjustFontSize(selected, "decrease"),
       canIncreaseFontSize: this.canAdjustFontSize(selected, "increase"),
     };
@@ -639,6 +662,9 @@ export class BoardController {
 
   setSelectedTextAlign(textAlign: TextAlign): void {
     this.applyStyleToSingleSelected((element) => {
+      if (!element.getStyleControlOptions().textAlign) {
+        return;
+      }
       if ("textAlign" in element) {
         element.textAlign = textAlign;
       }
@@ -694,14 +720,14 @@ export class BoardController {
   }
 
   private applyStyleToSingleSelected(
-    updater: (element: Record<string, unknown>) => void,
+    updater: (element: CanvasElement) => void,
   ): void {
     this.boardStore.update((board) => {
       const selected = board.getSelectedElements();
       if (selected.length !== 1) {
         return board;
       }
-      updater(selected[0] as unknown as Record<string, unknown>);
+      updater(selected[0]);
       return board;
     });
   }

@@ -22,7 +22,7 @@ export class StickyNoteElement extends CanvasElement {
     this.fontSize = params.fontSize ?? 16;
     this.fillColor = params.fillColor ?? "#fef08a";
     this.borderColor = params.borderColor ?? "#854d0e";
-    this.textAlign = params.textAlign ?? "left";
+    this.textAlign = "center";
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
@@ -41,20 +41,26 @@ export class StickyNoteElement extends CanvasElement {
     ctx.fillStyle = "#1f2937";
     ctx.font = `${this.fontSize}px Inter, system-ui, sans-serif`;
     ctx.textBaseline = "top";
-    ctx.textAlign = this.textAlign;
-    const textX =
-      this.textAlign === "left"
-        ? this.x + 8
-        : this.textAlign === "center"
-          ? this.x + this.width / 2
-          : this.x + this.width - 8;
+    ctx.textAlign = "center";
+    const textX = this.x + this.width / 2;
     const maxLineWidth = Math.max(0, this.width - 16);
     const lines = wrapLines(ctx, this.text, maxLineWidth);
     const lineHeight = Math.max(12, this.fontSize * 1.3);
+    const totalTextHeight = lines.length * lineHeight;
+    const contentHeight = Math.max(0, this.height - 16);
+    const startY =
+      this.y + 8 + Math.max(0, (contentHeight - totalTextHeight) / 2);
     for (let i = 0; i < lines.length; i++) {
-      ctx.fillText(lines[i], textX, this.y + 8 + i * lineHeight, maxLineWidth);
+      ctx.fillText(lines[i], textX, startY + i * lineHeight, maxLineWidth);
     }
     ctx.restore();
+  }
+
+  override getStyleControlOptions() {
+    return {
+      ...super.getStyleControlOptions(),
+      textAlign: false,
+    };
   }
 
   contains(point: Point): boolean {

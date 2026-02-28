@@ -1,5 +1,12 @@
 import type { CanvasElementJSON, Point } from "./types";
 
+export interface StyleControlOptions {
+  fillColor: boolean;
+  borderColor: boolean;
+  textAlign: boolean;
+  fontSize: boolean;
+}
+
 export abstract class CanvasElement {
   readonly id: string;
   x: number;
@@ -30,6 +37,21 @@ export abstract class CanvasElement {
   abstract draw(ctx: CanvasRenderingContext2D): void;
   abstract contains(point: Point): boolean;
   abstract toJSON(): CanvasElementJSON;
+
+  getStyleControlOptions(): StyleControlOptions {
+    const element = this as unknown as Record<string, unknown>;
+    const textAlignValue = element.textAlign;
+
+    return {
+      fillColor: typeof element.fillColor === "string",
+      borderColor: typeof element.borderColor === "string",
+      textAlign:
+        textAlignValue === "left" ||
+        textAlignValue === "center" ||
+        textAlignValue === "right",
+      fontSize: typeof element.fontSize === "number",
+    };
+  }
 
   move(dx: number, dy: number): void {
     this.x += dx;
