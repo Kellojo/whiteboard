@@ -56,7 +56,6 @@ Things that would be nice to have:
 - More shapes (e.g. circles, arrows, ...)
 - More text formatting options (e.g. italic, underline, ...)
 - More image editing options (e.g. cropping, rotating, ...)
-- Favicon and app icon
 - Better support for mobile and touch devices
 
 ### 🛠️ Developing
