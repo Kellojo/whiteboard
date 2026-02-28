@@ -105,6 +105,18 @@ export async function createIconSvgData(iconId: string): Promise<{
   width: number;
   height: number;
 } | null> {
+  const color = "#111827";
+  return createIconSvgDataWithColor(iconId, color);
+}
+
+export async function createIconSvgDataWithColor(
+  iconId: string,
+  color: string,
+): Promise<{
+  dataUrl: string;
+  width: number;
+  height: number;
+} | null> {
   const icon = await loadIconData(iconId);
   if (!icon) {
     return null;
@@ -115,14 +127,14 @@ export async function createIconSvgData(iconId: string): Promise<{
     width?: number;
     height?: number;
   };
-  const body = raw.body ?? "";
+  const body = (raw.body ?? "").replaceAll("currentColor", color);
   if (!body) {
     return null;
   }
 
   const width = raw.width ?? 24;
   const height = raw.height ?? 24;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" fill="none" stroke="#111827" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" color="${color}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
   return {
     dataUrl: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
     width,

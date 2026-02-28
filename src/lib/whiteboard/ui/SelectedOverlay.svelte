@@ -27,7 +27,9 @@
     controller: BoardController;
   } = $props();
 
-  let openColorPicker = $state<"border" | "fill" | "text" | null>(null);
+  let openColorPicker = $state<"border" | "fill" | "text" | "icon" | null>(
+    null,
+  );
 
   const fillSwatches = [
     "transparent",
@@ -70,6 +72,7 @@
   const defaultBorderPickerColor = "#111827";
   const defaultFillPickerColor = "#ffffff";
   const defaultTextPickerColor = "#111827";
+  const defaultIconPickerColor = "#111827";
 
   function getColorPickerValue(
     color: string | null | undefined,
@@ -92,32 +95,39 @@
     return !normalizedSwatches.includes(color.toLowerCase());
   }
 
-  function toggleColorPicker(kind: "border" | "fill" | "text") {
+  function toggleColorPicker(kind: "border" | "fill" | "text" | "icon") {
     openColorPicker = openColorPicker === kind ? null : kind;
   }
 
   function applyColorSelection(
-    kind: "border" | "fill" | "text",
+    kind: "border" | "fill" | "text" | "icon",
     color: string,
   ) {
     if (kind === "border") {
       controller.setSelectedBorderColor(color);
     } else if (kind === "fill") {
       controller.setSelectedFillColor(color);
-    } else {
+    } else if (kind === "text") {
       controller.setSelectedTextColor(color);
+    } else {
+      void controller.setSelectedIconColor(color);
     }
     openColorPicker = null;
   }
 
-  function applyCustomColor(kind: "border" | "fill" | "text", event: Event) {
+  function applyCustomColor(
+    kind: "border" | "fill" | "text" | "icon",
+    event: Event,
+  ) {
     const value = (event.currentTarget as HTMLInputElement).value;
     if (kind === "border") {
       controller.setSelectedBorderColor(value);
     } else if (kind === "fill") {
       controller.setSelectedFillColor(value);
-    } else {
+    } else if (kind === "text") {
       controller.setSelectedTextColor(value);
+    } else {
+      void controller.setSelectedIconColor(value);
     }
   }
 
@@ -347,6 +357,58 @@
                   defaultTextPickerColor,
                 )}
                 oninput={(event) => applyCustomColor("text", event)}
+              />
+            </label>
+          </div>
+        </div>
+      {/if}
+    </div>
+  {/if}
+
+  {#if overlay.style.controls.iconColor && overlay.style.iconColor}
+    <div class="mini-group color-picker-host">
+      <button
+        type="button"
+        class="color-trigger"
+        class:active={openColorPicker === "icon"}
+        aria-label="Icon color"
+        title="Icon color"
+        onclick={() => toggleColorPicker("icon")}
+      >
+        <Icon icon={paintBucketIcon} width="14" height="14" />
+      </button>
+
+      {#if openColorPicker === "icon"}
+        <div class="color-popup">
+          <div class="color-grid">
+            {#each textSwatches as color}
+              <button
+                type="button"
+                class="swatch"
+                class:active={overlay.style.iconColor === color}
+                style:background={color}
+                title={`Icon ${color}`}
+                onclick={() => applyColorSelection("icon", color)}
+              ></button>
+            {/each}
+          </div>
+          <div class="color-custom-row">
+            <span>Custom</span>
+            <label
+              class="swatch swatch-picker"
+              class:active={isCustomColorSelected(
+                overlay.style.iconColor,
+                textSwatches,
+              )}
+              title="Custom icon color"
+            >
+              <input
+                type="color"
+                value={getColorPickerValue(
+                  overlay.style.iconColor,
+                  defaultIconPickerColor,
+                )}
+                oninput={(event) => applyCustomColor("icon", event)}
               />
             </label>
           </div>

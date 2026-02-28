@@ -412,10 +412,19 @@
     }
 
     const scale = 3;
-    controller.addImageElement(iconSvg.dataUrl, worldPoint, {
-      width: iconSvg.width * scale,
-      height: iconSvg.height * scale,
-    });
+    const iconColor = "#111827";
+    controller.addImageElement(
+      iconSvg.dataUrl,
+      worldPoint,
+      {
+        width: iconSvg.width * scale,
+        height: iconSvg.height * scale,
+      },
+      {
+        iconId,
+        iconColor,
+      },
+    );
   }
 
   async function addImageFilesAt(files: File[], worldPoint: Point) {
@@ -485,6 +494,7 @@
       !style.controls.fillColor &&
       !style.controls.borderColor &&
       !style.controls.textColor &&
+      !style.controls.iconColor &&
       !style.controls.textAlign &&
       !style.controls.fontSize
     ) {

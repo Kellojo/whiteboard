@@ -10,6 +10,7 @@ import { TextElement } from "../domain/TextElement";
 import { VideoElement } from "../domain/VideoElement";
 import type { CanvasElementJSON, Point, TextAlign } from "../domain/types";
 import type { ViewportState } from "../stores";
+import { createIconSvgDataWithColor } from "../ui/iconCatalog";
 
 type InteractionMode =
   | "idle"
@@ -48,12 +49,14 @@ export interface SelectedStyleState {
     fillColor: boolean;
     borderColor: boolean;
     textColor: boolean;
+    iconColor: boolean;
     textAlign: boolean;
     fontSize: boolean;
   };
   fillColor: string | null;
   borderColor: string | null;
   textColor: string | null;
+  iconColor: string | null;
   textAlign: TextAlign | null;
   fontSize: number | null;
   canDecreaseFontSize: boolean;
@@ -449,6 +452,7 @@ export class BoardController {
     imageDataUrl: string,
     position: Point,
     naturalSize?: { width: number; height: number },
+    options?: { iconId?: string; iconColor?: string },
   ): void {
     const naturalWidth = naturalSize?.width ?? 320;
     const naturalHeight = naturalSize?.height ?? 240;
@@ -471,6 +475,8 @@ export class BoardController {
           width,
           height,
           imageDataUrl,
+          iconId: options?.iconId,
+          iconColor: options?.iconColor,
         }),
       );
       return board;
@@ -677,6 +683,12 @@ export class BoardController {
       "textColor" in selected && typeof selected.textColor === "string"
         ? selected.textColor
         : null;
+    const iconColor =
+      selected instanceof ImageElement &&
+      typeof selected.iconId === "string" &&
+      selected.iconId.length > 0
+        ? (selected.iconColor ?? "#111827")
+        : null;
     const hasTextAlign =
       "textAlign" in selected &&
       (selected.textAlign === "left" ||
@@ -692,6 +704,7 @@ export class BoardController {
     const hasFillColor = fillColor !== null;
     const hasBorderColor = borderColor !== null;
     const hasTextColor = textColor !== null;
+    const hasIconColor = iconColor !== null;
     const hasFontSize = fontSize !== null;
 
     return {
@@ -699,12 +712,14 @@ export class BoardController {
         fillColor: controls.fillColor && hasFillColor,
         borderColor: controls.borderColor && hasBorderColor,
         textColor: controls.textColor && hasTextColor,
+        iconColor: hasIconColor,
         textAlign: controls.textAlign && hasTextAlign,
         fontSize: controls.fontSize && hasFontSize,
       },
       fillColor,
       borderColor,
       textColor,
+      iconColor,
       textAlign,
       fontSize,
       canDecreaseFontSize: this.canAdjustFontSize(selected, "decrease"),
@@ -761,6 +776,34 @@ export class BoardController {
       if ("textColor" in element) {
         element.textColor = textColor;
       }
+    });
+  }
+
+  async setSelectedIconColor(iconColor: string): Promise<void> {
+    const selected = this.getSingleSelectedElement();
+    if (!(selected instanceof ImageElement) || !selected.iconId) {
+      return;
+    }
+
+    const iconSvg = await createIconSvgDataWithColor(
+      selected.iconId,
+      iconColor,
+    );
+    if (!iconSvg) {
+      return;
+    }
+
+    this.boardStore.update((board) => {
+      const currentSelected = board.getSelectedElements()[0];
+      if (
+        !(currentSelected instanceof ImageElement) ||
+        !currentSelected.iconId
+      ) {
+        return board;
+      }
+      currentSelected.iconColor = iconColor;
+      currentSelected.setImageDataUrl(iconSvg.dataUrl);
+      return board;
     });
   }
 

@@ -1,18 +1,26 @@
 import { CanvasElement } from "./CanvasElement";
 import type { CanvasElementJSON, Point } from "./types";
+import { createIconSvgDataWithColor } from "../ui/iconCatalog";
 
 export class ImageElement extends CanvasElement {
   imageDataUrl: string;
+  iconId: string | null;
+  iconColor: string | null;
   private image: HTMLImageElement | null = null;
   private loaded = false;
+  private iconHydrationStarted = false;
 
   constructor(
     params: ConstructorParameters<typeof CanvasElement>[0] & {
       imageDataUrl?: string;
+      iconId?: string;
+      iconColor?: string;
     },
   ) {
     super(params);
     this.imageDataUrl = params.imageDataUrl ?? "";
+    this.iconId = params.iconId ?? null;
+    this.iconColor = params.iconColor ?? null;
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
@@ -56,6 +64,8 @@ export class ImageElement extends CanvasElement {
       rotation: this.rotation,
       isSelected: this.isSelected,
       imageDataUrl: this.imageDataUrl,
+      iconId: this.iconId ?? undefined,
+      iconColor: this.iconColor ?? undefined,
     };
   }
 
@@ -63,10 +73,41 @@ export class ImageElement extends CanvasElement {
     return new ImageElement({
       ...json,
       imageDataUrl: json.imageDataUrl ?? "",
+      iconId: json.iconId,
+      iconColor: json.iconColor,
     });
   }
 
+  setImageDataUrl(imageDataUrl: string): void {
+    this.imageDataUrl = imageDataUrl;
+    this.image = null;
+    this.loaded = false;
+    this.iconHydrationStarted = true;
+  }
+
   private ensureImage() {
+    if (
+      !this.iconHydrationStarted &&
+      this.iconId &&
+      this.iconColor &&
+      typeof window !== "undefined"
+    ) {
+      this.iconHydrationStarted = true;
+      void createIconSvgDataWithColor(this.iconId, this.iconColor).then(
+        (iconSvg) => {
+          if (!iconSvg) {
+            return;
+          }
+          if (iconSvg.dataUrl === this.imageDataUrl) {
+            return;
+          }
+          this.imageDataUrl = iconSvg.dataUrl;
+          this.image = null;
+          this.loaded = false;
+        },
+      );
+    }
+
     if (this.image || !this.imageDataUrl) {
       return;
     }
