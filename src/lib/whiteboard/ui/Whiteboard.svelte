@@ -1302,12 +1302,12 @@
   .transparent-swatch::after {
     content: "";
     position: absolute;
-    left: 3px;
-    top: 10px;
-    width: 14px;
+    left: 50%;
+    top: 50%;
+    width: 1rem;
     height: 2px;
     background: var(--danger);
-    transform: rotate(-35deg);
+    transform: translate(-50%, -50%) rotate(-35deg);
     border-radius: 999px;
   }
 
