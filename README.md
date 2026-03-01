@@ -84,6 +84,7 @@ Things that would be nice to have:
 - More text formatting options (e.g. italic, underline, ...)
 - More image editing options (e.g. cropping, rotating, ...)
 - Better support for mobile and touch devices
+- Automated e2e tests with playwright
 
 ### 🛠️ Developing
 

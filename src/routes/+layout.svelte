@@ -1,5 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
+  import { page } from "$app/state";
   import logOutIcon from "@iconify-icons/lucide/log-out";
   import moonIcon from "@iconify-icons/lucide/moon";
   import sunIcon from "@iconify-icons/lucide/sun";
@@ -86,7 +87,7 @@
 {@render children()}
 
 <div class="top-actions">
-  {#if data.user}
+  {#if data.user && !page.url.pathname.startsWith("/auth")}
     <Button
       type="button"
       class="top-action top-action-signout"
