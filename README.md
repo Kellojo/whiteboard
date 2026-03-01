@@ -55,7 +55,6 @@ You can generate a secret with:
 npx auth secret
 ```
 
-> Information
 > In production, always set a strong `BETTER_AUTH_SECRET` and use HTTPS for `BETTER_AUTH_URL`.
 
 ### Optional OIDC providers
