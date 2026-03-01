@@ -1,7 +1,7 @@
 import { building } from "$app/environment";
 import { redirect, type Handle } from "@sveltejs/kit";
 import { svelteKitHandler } from "better-auth/svelte-kit";
-import { auth } from "$lib/auth";
+import { getAuth } from "$lib/auth";
 
 function isProtectedPath(pathname: string): boolean {
   return (
@@ -12,6 +12,8 @@ function isProtectedPath(pathname: string): boolean {
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
+  const auth = getAuth();
+
   const session = await auth.api.getSession({
     headers: event.request.headers,
   });
