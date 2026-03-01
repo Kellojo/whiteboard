@@ -232,9 +232,6 @@
     border-width: 0.0625rem;
   }
 
-  .color-popup.compact .color-grid {
-  }
-
   .color-popup.compact .color-custom-row {
     font-size: 0.75rem;
   }

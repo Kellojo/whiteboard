@@ -41,8 +41,32 @@
       ),
       linear-gradient(90deg, var(--grid-line-color) 1px, transparent 1px);
     background-size: var(--grid-size) var(--grid-size);
+    background-position:
+      0 0,
+      0 0;
     opacity: var(--grid-line-opacity);
     pointer-events: none;
     z-index: -1;
+    animation: grid-drift 6s ease-in-out infinite alternate;
+  }
+
+  @keyframes grid-drift {
+    from {
+      background-position:
+        0 0,
+        0 0;
+    }
+
+    to {
+      background-position:
+        20px 14px,
+        20px 14px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .grid-background::before {
+      animation: none;
+    }
   }
 </style>
