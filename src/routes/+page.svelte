@@ -3,6 +3,8 @@
   import plusIcon from "@iconify-icons/lucide/plus";
   import trashIcon from "@iconify-icons/lucide/trash-2";
   import { goto } from "$app/navigation";
+  import Button from "$lib/ui/Button.svelte";
+  import GridBackground from "$lib/ui/GridBackground.svelte";
   import { onMount } from "svelte";
 
   interface BoardMeta {
@@ -114,64 +116,68 @@
   });
 </script>
 
-<main class="explorer-page">
-  <header class="explorer-header">
-    <h1>Whiteboards</h1>
-    <p>Choose a board like a file explorer, or create a new one.</p>
-  </header>
+<GridBackground>
+  <main class="explorer-page">
+    <header class="explorer-header">
+      <h1>Whiteboards</h1>
+      <p>Choose a board like a file explorer, or create a new one.</p>
+    </header>
 
-  <section class="create-row">
-    <input
-      type="text"
-      placeholder="New board name"
-      bind:value={newBoardName}
-      onkeydown={(event) => {
-        if (event.key === "Enter") {
-          void createBoard();
-        }
-      }}
-    />
-    <button
-      type="button"
-      disabled={isCreating}
-      onclick={() => void createBoard()}
-    >
-      <Icon icon={plusIcon} width="16" height="16" />
-      {isCreating ? "Creating..." : "Create board"}
-    </button>
-  </section>
+    <section class="create-row">
+      <input
+        type="text"
+        placeholder="New board name"
+        bind:value={newBoardName}
+        onkeydown={(event) => {
+          if (event.key === "Enter") {
+            void createBoard();
+          }
+        }}
+      />
+      <Button
+        type="button"
+        class="create-button"
+        disabled={isCreating}
+        onclick={() => void createBoard()}
+      >
+        <Icon icon={plusIcon} width="16" height="16" />
+        {isCreating ? "Creating..." : "Create board"}
+      </Button>
+    </section>
 
-  <section class="board-list" aria-busy={isLoading}>
-    {#if isLoading}
-      <p class="empty-state">Loading boards...</p>
-    {:else if boards.length === 0}
-      <p class="empty-state">No boards yet. Create your first board.</p>
-    {:else}
-      {#each boards as boardMeta}
-        <div class="board-row">
-          <a class="board-link" href={`/whiteboard/${boardMeta.id}`}>
-            <div class="board-name">{boardMeta.name}</div>
-            <div class="board-date">
-              {boardMeta.elementCount}
-              {boardMeta.elementCount === 1 ? "item" : "items"} • {formatFileSize(
-                boardMeta.fileSizeBytes,
-              )} • Updated {formatUpdatedDate(boardMeta.updatedAt)}
-            </div>
-          </a>
-          <button
-            type="button"
-            class="delete-button"
-            disabled={deletingBoardId === boardMeta.id}
-            onclick={() => void deleteBoardById(boardMeta)}
-          >
-            <Icon icon={trashIcon} width="15" height="15" />
-            {deletingBoardId === boardMeta.id ? "Deleting..." : "Delete"}
-          </button>
-        </div>
-      {/each}
-    {/if}
-  </section>
-</main>
+    <section class="board-list" aria-busy={isLoading}>
+      {#if isLoading}
+        <p class="empty-state">Loading boards...</p>
+      {:else if boards.length === 0}
+        <p class="empty-state">No boards yet. Create your first board.</p>
+      {:else}
+        {#each boards as boardMeta}
+          <div class="board-row">
+            <a class="board-link" href={`/whiteboard/${boardMeta.id}`}>
+              <div class="board-name">{boardMeta.name}</div>
+              <div class="board-date">
+                {boardMeta.elementCount}
+                {boardMeta.elementCount === 1 ? "item" : "items"} • {formatFileSize(
+                  boardMeta.fileSizeBytes,
+                )} • Updated {formatUpdatedDate(boardMeta.updatedAt)}
+              </div>
+            </a>
+            <Button
+              type="button"
+              size="compact"
+              class="delete-button"
+              disabled={deletingBoardId === boardMeta.id}
+              onclick={() => void deleteBoardById(boardMeta)}
+            >
+              <Icon icon={trashIcon} width="15" height="15" />
+              {deletingBoardId === boardMeta.id ? "Deleting..." : "Delete"}
+            </Button>
+          </div>
+        {/each}
+      {/if}
+    </section>
+  </main>
+</GridBackground>
 
 <style>
   .explorer-page {
@@ -211,17 +217,11 @@
     font-size: 14px;
   }
 
-  .create-row button {
+  :global(.create-button) {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    border: 1px solid var(--border-1);
-    border-radius: 10px;
-    background: var(--button-bg);
-    color: var(--button-text);
     padding: 10px 14px;
-    font-size: 14px;
-    cursor: pointer;
   }
 
   .board-list {
@@ -257,27 +257,12 @@
     background: var(--surface-2);
   }
 
-  .delete-button {
+  :global(.delete-button) {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     margin-right: 10px;
-    border: 1px solid var(--border-1);
     border-radius: 8px;
-    background: var(--button-bg);
-    color: var(--button-text);
-    padding: 6px 10px;
-    font-size: 13px;
-    cursor: pointer;
-  }
-
-  .delete-button:hover:enabled {
-    background: var(--button-bg-hover);
-  }
-
-  .delete-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
   }
 
   .board-name {

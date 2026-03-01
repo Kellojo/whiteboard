@@ -20,12 +20,14 @@ Whiteboards with shapes, sticky notes, text, images and icons. Deployable as a s
 - 🔗 Share links to specific boards
 - 📦 Import/export individual boards as JSON files
 - 🐳 Deployable as a simple docker container (boards are stored as a JSON file)
+- 🔐 Built-in authentication with Better Auth + SQLite
+- 🪪 Email/password registration and sign-in
+- 🌐 OIDC provider sign-in (configurable via environment)
 - Light and dark mode
 
-## 🚫 Currently does not support
+**Currently does not support:**
 
 - Real time collaboration (not planned for the foreseeable future)
-- User accounts and permissions (ideally, put this behind a reverse proxy with authentication)
 
 ## 🏠 Self-hosting
 
@@ -40,14 +42,37 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - ORIGIN=http://localhost:3000
+      - BETTER_AUTH_SECRET=replace-with-a-long-random-secret
+      - BETTER_AUTH_URL=http://localhost:3000
+      - AUTH_ENABLE_EMAIL_PASSWORD=true
     volumes:
       - ./whiteboards:/app/.whiteboards
 ```
 
+You can generate a secret with:
+
+```sh
+npx auth secret
+```
+
 :::warning
-The app does not include any authentication or access control mechanisms. Make sure to put it behind a reverse proxy with authentication to prevent unauthorized access.
+In production, always set a strong `BETTER_AUTH_SECRET` and use HTTPS for `BETTER_AUTH_URL`.
 :::
+
+### Optional OIDC providers
+
+Configure one or more OIDC providers via `OIDC_PROVIDERS_JSON`.
+
+```env
+OIDC_PROVIDERS_JSON=[{"providerId":"keycloak","name":"Keycloak","discoveryUrl":"https://id.example.com/realms/main/.well-known/openid-configuration","clientId":"whiteboard","clientSecret":"replace-me","scopes":["openid","profile","email"]}]
+```
+
+After setting this, users can sign in with those providers on the `/auth/login` and `/auth/signup` pages.
+
+### Optional email/password toggle
+
+Set `AUTH_ENABLE_EMAIL_PASSWORD=false` to disable email/password login and signup forms.
+OIDC provider sign-in remains available when configured.
 
 ## 🤝 Contributing
 
@@ -59,6 +84,7 @@ Things that would be nice to have:
 - More text formatting options (e.g. italic, underline, ...)
 - More image editing options (e.g. cropping, rotating, ...)
 - Better support for mobile and touch devices
+- Automated e2e tests with playwright
 
 ### 🛠️ Developing
 

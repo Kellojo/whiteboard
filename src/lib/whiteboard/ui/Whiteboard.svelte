@@ -1045,7 +1045,7 @@
 
   .board-title {
     position: fixed;
-    top: 2rem;
+    top: 1rem;
     left: 50%;
     transform: translateX(-50%);
     z-index: var(--z-static-title);
