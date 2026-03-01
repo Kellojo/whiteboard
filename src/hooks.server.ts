@@ -12,7 +12,7 @@ function isProtectedPath(pathname: string): boolean {
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
-  const auth = getAuth();
+  const auth = await getAuth();
 
   const session = await auth.api.getSession({
     headers: event.request.headers,

@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { getMigrations } from "better-auth/db/migration";
 import { genericOAuth } from "better-auth/plugins";
 import Database from "better-sqlite3";
 import { mkdirSync } from "node:fs";
@@ -79,15 +80,31 @@ function createAuth() {
 type AuthInstance = ReturnType<typeof createAuth>;
 
 let authInstance: AuthInstance | null = null;
+let authInitPromise: Promise<AuthInstance> | null = null;
 
-export function getAuth(): AuthInstance {
+async function initializeAuth(): Promise<AuthInstance> {
+  const auth = createAuth();
+  const { runMigrations } = await getMigrations(auth.options);
+  await runMigrations();
+
+  authInstance = auth;
+
+  return auth;
+}
+
+export function getAuth(): Promise<AuthInstance> {
   if (authInstance) {
-    return authInstance;
+    return Promise.resolve(authInstance);
   }
 
-  authInstance = createAuth();
+  if (!authInitPromise) {
+    authInitPromise = initializeAuth().catch((error) => {
+      authInitPromise = null;
+      throw error;
+    });
+  }
 
-  return authInstance;
+  return authInitPromise;
 }
 
 export const configuredOidcProviders = oidcProviderSummaries;

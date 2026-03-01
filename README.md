@@ -57,6 +57,8 @@ npx auth secret
 
 > In production, always set a strong `BETTER_AUTH_SECRET` and use HTTPS for `BETTER_AUTH_URL`.
 
+On first startup, auth tables are created automatically in `.whiteboards/auth.sqlite`.
+
 ### Optional OIDC providers
 
 Configure one or more OIDC providers via `OIDC_PROVIDERS_JSON`.
