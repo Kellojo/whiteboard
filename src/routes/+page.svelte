@@ -3,6 +3,7 @@
   import plusIcon from "@iconify-icons/lucide/plus";
   import trashIcon from "@iconify-icons/lucide/trash-2";
   import { goto } from "$app/navigation";
+  import Button from "$lib/ui/Button.svelte";
   import GridBackground from "$lib/ui/GridBackground.svelte";
   import { onMount } from "svelte";
 
@@ -133,14 +134,15 @@
           }
         }}
       />
-      <button
+      <Button
         type="button"
+        class="create-button"
         disabled={isCreating}
         onclick={() => void createBoard()}
       >
         <Icon icon={plusIcon} width="16" height="16" />
         {isCreating ? "Creating..." : "Create board"}
-      </button>
+      </Button>
     </section>
 
     <section class="board-list" aria-busy={isLoading}>
@@ -160,15 +162,16 @@
                 )} • Updated {formatUpdatedDate(boardMeta.updatedAt)}
               </div>
             </a>
-            <button
+            <Button
               type="button"
+              size="compact"
               class="delete-button"
               disabled={deletingBoardId === boardMeta.id}
               onclick={() => void deleteBoardById(boardMeta)}
             >
               <Icon icon={trashIcon} width="15" height="15" />
               {deletingBoardId === boardMeta.id ? "Deleting..." : "Delete"}
-            </button>
+            </Button>
           </div>
         {/each}
       {/if}
@@ -214,17 +217,11 @@
     font-size: 14px;
   }
 
-  .create-row button {
+  :global(.create-button) {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    border: 1px solid var(--border-1);
-    border-radius: 10px;
-    background: var(--button-bg);
-    color: var(--button-text);
     padding: 10px 14px;
-    font-size: 14px;
-    cursor: pointer;
   }
 
   .board-list {
@@ -260,27 +257,12 @@
     background: var(--surface-2);
   }
 
-  .delete-button {
+  :global(.delete-button) {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     margin-right: 10px;
-    border: 1px solid var(--border-1);
     border-radius: 8px;
-    background: var(--button-bg);
-    color: var(--button-text);
-    padding: 6px 10px;
-    font-size: 13px;
-    cursor: pointer;
-  }
-
-  .delete-button:hover:enabled {
-    background: var(--button-bg-hover);
-  }
-
-  .delete-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
   }
 
   .board-name {

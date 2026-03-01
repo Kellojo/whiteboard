@@ -15,6 +15,7 @@
   import minusIcon from "@iconify-icons/lucide/minus";
   import importIcon from "@iconify-icons/lucide/upload";
   import exportIcon from "@iconify-icons/lucide/download";
+  import Button from "$lib/ui/Button.svelte";
   import ColorSwatchPicker from "./ColorSwatchPicker.svelte";
   import {
     DEFAULT_DRAW_PICKER_COLOR,
@@ -132,66 +133,68 @@
 <div class="toolbar">
   <div class="actions">
     {#if onBack}
-      <button
+      <Button
         type="button"
-        class="action-icon"
+        icon
+        iconSize="sm"
         aria-label="Back"
         title="Back"
         onclick={onBack}
       >
         <Icon icon={backIcon} width="18" height="18" />
-      </button>
+      </Button>
     {/if}
-    <button
+    <Button
       type="button"
-      class="action-icon"
-      class:active={snapEnabled}
+      icon
+      iconSize="sm"
+      active={snapEnabled}
       aria-label={snapEnabled ? "Disable snapping" : "Enable snapping"}
       title={snapEnabled ? "Snapping on" : "Snapping off"}
       onclick={onToggleSnapping}
     >
       <Icon icon={magnetIcon} width="18" height="18" />
-    </button>
-    <button
+    </Button>
+    <Button
       type="button"
-      class="action-icon"
+      icon
+      iconSize="sm"
       aria-label="Export JSON"
       title="Export JSON"
       onclick={onExport}
     >
       <Icon icon={exportIcon} width="18" height="18" />
-    </button>
-    <label
-      class="import-button action-icon"
-      aria-label="Import JSON"
-      title="Import JSON"
-    >
+    </Button>
+    <label class="import-button" aria-label="Import JSON" title="Import JSON">
       <Icon icon={importIcon} width="18" height="18" />
       <input type="file" accept="application/json" onchange={onImport} />
     </label>
   </div>
   <div class="tools">
     <div class="pen-group" class:open={freeDrawMode}>
-      <button
+      <Button
         type="button"
-        class="tool-button"
-        class:active={freeDrawMode}
+        icon
+        iconSize="md"
+        active={freeDrawMode}
         aria-label={freeDrawMode ? "Disable drawing" : "Enable drawing"}
         title={freeDrawMode ? "Drawing on" : "Draw freehand"}
         onclick={onToggleFreeDrawMode}
       >
         <Icon icon={pencilIcon} width="22" height="22" />
-      </button>
+      </Button>
       <div
         class="draw-controls"
         class:open={freeDrawMode}
         aria-hidden={!freeDrawMode}
       >
         <div class="draw-width-picker-host">
-          <button
+          <Button
             type="button"
-            class="tool-button width-trigger"
-            class:active={openDrawWidthPicker}
+            icon
+            iconSize="md"
+            active={openDrawWidthPicker}
+            class="width-trigger"
             aria-label="Drawing width"
             title={`Drawing width ${freeDrawStrokeWidth}px`}
             onclick={() => {
@@ -201,7 +204,7 @@
           >
             <Icon icon={minusIcon} width="18" height="18" />
             <span class="draw-width-chip">{freeDrawStrokeWidth}</span>
-          </button>
+          </Button>
 
           {#if openDrawWidthPicker}
             <div
@@ -211,16 +214,17 @@
             >
               <div class="width-presets">
                 {#each drawWidthPresets as width}
-                  <button
+                  <Button
                     type="button"
+                    size="tiny"
+                    active={freeDrawStrokeWidth === width}
                     class="width-preset"
-                    class:active={freeDrawStrokeWidth === width}
                     onclick={() => {
                       onSetFreeDrawStrokeWidth(width);
                     }}
                   >
                     {width}
-                  </button>
+                  </Button>
                 {/each}
               </div>
               <input
@@ -242,10 +246,12 @@
         </div>
 
         <div class="draw-color-picker-host">
-          <button
+          <Button
             type="button"
-            class="tool-button color-trigger"
-            class:active={openDrawColorPicker}
+            icon
+            iconSize="md"
+            active={openDrawColorPicker}
+            class="color-trigger"
             aria-label="Drawing color"
             title="Drawing color"
             onclick={() => {
@@ -256,7 +262,7 @@
             <Icon icon={paintBucketIcon} width="18" height="18" />
             <span class="draw-color-chip" style:background={freeDrawColor}
             ></span>
-          </button>
+          </Button>
 
           {#if openDrawColorPicker}
             <ColorSwatchPicker
@@ -281,27 +287,29 @@
     <div class="tool-separator" aria-hidden="true"></div>
 
     {#each createButtons as button}
-      <button
+      <Button
         type="button"
-        class="tool-button"
+        icon
+        iconSize="md"
         aria-label={button.label}
         title={button.label}
         onclick={() => onCreate(button.kind)}
       >
         <Icon icon={button.icon} width="22" height="22" />
-      </button>
+      </Button>
     {/each}
-    <button
+    <Button
       type="button"
-      class="tool-button"
-      class:active={iconBrowserOpen}
+      icon
+      iconSize="md"
+      active={iconBrowserOpen}
       data-icon-browser-toggle="true"
       aria-label={iconBrowserOpen ? "Hide icon browser" : "Show icon browser"}
       title={iconBrowserOpen ? "Hide icons" : "Browse icons"}
       onclick={onToggleIconBrowser}
     >
       <Icon icon={paletteIcon} width="22" height="22" />
-    </button>
+    </Button>
   </div>
 </div>
 {#if !freeDrawMode}
@@ -354,37 +362,8 @@
     -webkit-backdrop-filter: blur(var(--glass-blur));
   }
 
-  button,
-  .import-button {
-    border: 0.0625rem solid var(--border-1);
-    color: var(--button-text);
-    background: var(--button-bg);
-    padding: 0.375rem 0.625rem;
-    font-size: 0.875rem;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    transition:
-      background-color 140ms ease,
-      border-color 140ms ease;
-  }
-
-  button:hover,
-  .import-button:hover {
-    background: var(--button-bg-hover);
-    border-color: var(--border-2);
-  }
-
   input[type="file"] {
     display: none;
-  }
-
-  .tool-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.625rem;
-    height: 2.625rem;
-    padding: 0;
   }
 
   .draw-controls {
@@ -436,7 +415,7 @@
     position: relative;
   }
 
-  .color-trigger {
+  :global(.color-trigger) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -454,7 +433,7 @@
     flex: 0 0 auto;
   }
 
-  .width-trigger {
+  :global(.width-trigger) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -497,7 +476,7 @@
     gap: 0.25rem;
   }
 
-  .width-preset {
+  :global(.width-preset) {
     height: 1.75rem;
     padding: 0;
     font-size: 0.75rem;
@@ -510,23 +489,27 @@
     margin: 0;
   }
 
-  .tool-button.active {
-    outline: 0.125rem solid var(--accent);
-    outline-offset: 0.0625rem;
-  }
-
-  .action-icon {
+  .import-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 2.25rem;
     height: 2.25rem;
     padding: 0;
+    border: 0.0625rem solid var(--border-1);
+    border-radius: 0.625rem;
+    background: var(--button-bg);
+    color: var(--button-text);
+    cursor: pointer;
+    transition:
+      background-color 140ms ease,
+      border-color 140ms ease,
+      opacity 140ms ease;
   }
 
-  .action-icon.active {
-    outline: 0.125rem solid var(--accent);
-    outline-offset: 0.0625rem;
+  .import-button:hover {
+    background: var(--button-bg-hover);
+    border-color: var(--border-2);
   }
 
   .hint {

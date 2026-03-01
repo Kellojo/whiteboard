@@ -1,8 +1,8 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { authClient } from "$lib/auth-client";
+  import Button from "$lib/ui/Button.svelte";
   import GridBackground from "$lib/ui/GridBackground.svelte";
-  import AuthActionButton from "$lib/ui/auth/AuthActionButton.svelte";
   import AuthInputField from "$lib/ui/auth/AuthInputField.svelte";
 
   let { data } = $props<{
@@ -85,9 +85,9 @@
             <p class="error">{errorMessage}</p>
           {/if}
 
-          <AuthActionButton type="submit" disabled={isSubmitting}>
+          <Button type="submit" fullWidth disabled={isSubmitting}>
             {isSubmitting ? "Signing in..." : "Sign in"}
-          </AuthActionButton>
+          </Button>
         </form>
       {:else}
         <p>Email/password sign-in is disabled.</p>
@@ -97,13 +97,14 @@
         <div class="divider">or continue with OIDC</div>
         <div class="provider-list">
           {#each data.providers as provider}
-            <button
+            <Button
               type="button"
+              fullWidth
               class="provider-button"
               onclick={() => void signInWithProvider(provider.providerId)}
             >
               {provider.name}
-            </button>
+            </Button>
           {/each}
         </div>
       {/if}
@@ -155,26 +156,6 @@
   form {
     display: grid;
     gap: 10px;
-  }
-
-  .provider-button {
-    width: 100%;
-    border: 1px solid var(--border-1);
-    border-radius: 0.625rem;
-    background: var(--button-bg);
-    color: var(--button-text);
-    padding: 0.625rem 0.75rem;
-    font-size: 1rem;
-    cursor: pointer;
-  }
-
-  .provider-button:hover:not(:disabled) {
-    background: var(--button-bg-hover);
-  }
-
-  .provider-button:disabled {
-    opacity: 0.7;
-    cursor: default;
   }
 
   .divider {

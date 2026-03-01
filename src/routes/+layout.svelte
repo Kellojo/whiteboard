@@ -5,6 +5,7 @@
   import sunIcon from "@iconify-icons/lucide/sun";
   import { goto } from "$app/navigation";
   import { authClient } from "$lib/auth-client";
+  import Button from "$lib/ui/Button.svelte";
   import { onMount } from "svelte";
   import favicon from "$lib/assets/favicon.svg";
   import "../app.css";
@@ -69,7 +70,7 @@
 
 <div class="top-actions">
   {#if data.user}
-    <button
+    <Button
       type="button"
       class="top-action top-action-signout"
       aria-label="Sign out"
@@ -78,11 +79,12 @@
     >
       <Icon icon={logOutIcon} width="16" height="16" />
       <span>Sign out</span>
-    </button>
+    </Button>
   {/if}
 
-  <button
+  <Button
     type="button"
+    icon
     class="top-action"
     aria-label={themeMode === "dark"
       ? "Switch to light mode"
@@ -92,10 +94,10 @@
   >
     <Icon
       icon={themeMode === "dark" ? sunIcon : moonIcon}
-      width="16"
-      height="16"
+      width="18"
+      height="18"
     />
-  </button>
+  </Button>
 </div>
 
 <style>
@@ -109,26 +111,17 @@
     gap: 0.5rem;
   }
 
-  .top-action {
+  :global(.top-action) {
     width: 36px;
     height: 36px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--border-1);
     border-radius: 0.5rem;
     background: var(--surface-1);
     color: var(--app-text);
     box-shadow: var(--shadow-s);
     backdrop-filter: blur(var(--glass-blur));
-    cursor: pointer;
   }
 
-  .top-action:hover {
-    background: var(--surface-2);
-  }
-
-  .top-action-signout {
+  :global(.top-action-signout) {
     width: auto;
     padding: 0 0.625rem;
     gap: 0.375rem;
@@ -136,7 +129,7 @@
     font-size: 0.8125rem;
   }
 
-  .top-action-signout span {
+  :global(.top-action-signout span) {
     line-height: 1;
   }
 </style>
