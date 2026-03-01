@@ -5,7 +5,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - ORIGIN=http://localhost:3000
+      - BETTER_AUTH_SECRET=replace-with-a-long-random-secret
+      - BETTER_AUTH_URL=http://localhost:3000
     volumes:
       - whiteboards_data:/app/.whiteboards
     restart: unless-stopped

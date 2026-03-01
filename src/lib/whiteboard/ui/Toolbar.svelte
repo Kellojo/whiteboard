@@ -8,8 +8,6 @@
   import headingIcon from "@iconify-icons/lucide/heading-1";
   import stickyIcon from "@iconify-icons/lucide/sticky-note";
   import backIcon from "@iconify-icons/lucide/arrow-left";
-  import sunIcon from "@iconify-icons/lucide/sun";
-  import moonIcon from "@iconify-icons/lucide/moon";
   import magnetIcon from "@iconify-icons/lucide/magnet";
   import paletteIcon from "@iconify-icons/lucide/palette";
   import pencilIcon from "@iconify-icons/lucide/pencil";
@@ -46,8 +44,6 @@
     onToggleSnapping,
     onExport,
     onImport,
-    themeMode,
-    onToggleTheme,
   }: {
     onBack?: () => void;
     onCreate: (kind: CreateKind) => void;
@@ -146,21 +142,6 @@
         <Icon icon={backIcon} width="18" height="18" />
       </button>
     {/if}
-    <button
-      type="button"
-      class="action-icon"
-      aria-label={themeMode === "dark"
-        ? "Switch to light mode"
-        : "Switch to dark mode"}
-      title={themeMode === "dark" ? "Light mode" : "Dark mode"}
-      onclick={onToggleTheme}
-    >
-      <Icon
-        icon={themeMode === "dark" ? sunIcon : moonIcon}
-        width="18"
-        height="18"
-      />
-    </button>
     <button
       type="button"
       class="action-icon"
