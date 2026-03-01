@@ -9,6 +9,7 @@
   import paintBucketIcon from "@iconify-icons/lucide/paint-bucket";
   import typeIcon from "@iconify-icons/lucide/type";
   import boldIcon from "@iconify-icons/lucide/bold";
+  import trashIcon from "@iconify-icons/lucide/trash";
   import { onMount } from "svelte";
   import ColorSwatchPicker from "./ColorSwatchPicker.svelte";
   import type {
@@ -278,6 +279,18 @@
       {/if}
     </div>
   {/if}
+
+  <div class="mini-group touch-delete-group">
+    <button
+      type="button"
+      class="delete-button"
+      title="Delete selection"
+      aria-label="Delete selection"
+      onclick={() => controller.deleteSelection()}
+    >
+      <Icon icon={trashIcon} width="14" height="14" />
+    </button>
+  </div>
 </div>
 
 <style>
@@ -361,5 +374,17 @@
     height: 1.875rem;
     padding: 0;
     gap: 0;
+  }
+
+  .touch-delete-group .delete-button {
+    min-width: 2.125rem;
+    height: 2.125rem;
+    color: var(--error);
+  }
+
+  @media (hover: none) and (pointer: coarse) {
+    .touch-delete-group {
+      display: flex;
+    }
   }
 </style>
