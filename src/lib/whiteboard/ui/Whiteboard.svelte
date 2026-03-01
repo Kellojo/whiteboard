@@ -768,6 +768,7 @@
       board={$board}
       viewport={$viewport}
       {controller}
+      editingTextTarget={textEditor}
       onCursorWorldChange={handleCursorWorldChange}
       onImageDrop={handleImageDrop}
       onIconDrop={handleIconDrop}
@@ -930,11 +931,11 @@
 
   .layers-panel {
     position: fixed;
-    top: 1rem;
+    top: 5rem;
     right: 1rem;
     z-index: var(--z-static-layers);
     width: min(20rem, 32vw);
-    max-height: calc(100vh - 2rem);
+    max-height: calc(100vh - 6rem);
     overflow: auto;
     border: 0.125rem solid var(--border-1);
     background: var(--surface-1);

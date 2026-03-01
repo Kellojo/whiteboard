@@ -1,8 +1,13 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { BoardController } from "../application/BoardController";
+  import type {
+    BoardController,
+    EditableTextTarget,
+  } from "../application/BoardController";
+  import { TextElement } from "../domain/TextElement";
   import type { Board } from "../domain/Board";
   import type { Point, Rect } from "../domain/types";
+  import { getMarkdownLinkAtPoint } from "../domain/markdownCanvas";
   import type { ViewportState } from "../stores";
   import { ICON_DROP_MIME, ICON_DROP_TEXT_PREFIX } from "./iconCatalog";
 
@@ -10,6 +15,7 @@
     board,
     viewport,
     controller,
+    editingTextTarget,
     onCursorWorldChange,
     onImageDrop,
     onIconDrop,
@@ -18,6 +24,7 @@
     board: Board;
     viewport: ViewportState;
     controller: BoardController;
+    editingTextTarget: EditableTextTarget | null;
     onCursorWorldChange: (point: Point) => void;
     onImageDrop: (files: File[], worldPoint: Point) => void;
     onIconDrop: (iconId: string, worldPoint: Point) => void | Promise<void>;
@@ -81,6 +88,11 @@
     );
 
     for (const element of board.getAllElements()) {
+      if (shouldHideEditingTextElement(element)) {
+        drawTextElementWithoutText(ctx, element);
+        continue;
+      }
+
       element.draw(ctx);
     }
 
@@ -93,6 +105,53 @@
     );
     drawResizeHandles(ctx);
     ctx.restore();
+  }
+
+  function shouldHideEditingTextElement(
+    element: unknown,
+  ): element is TextElement {
+    if (!editingTextTarget) {
+      return false;
+    }
+
+    if (!(element instanceof TextElement)) {
+      return false;
+    }
+
+    if (element.id !== editingTextTarget.id) {
+      return false;
+    }
+
+    return isTransparentFillColor(editingTextTarget.fillColor);
+  }
+
+  function drawTextElementWithoutText(
+    ctx: CanvasRenderingContext2D,
+    element: TextElement,
+  ) {
+    ctx.save();
+    ctx.fillStyle = element.fillColor;
+    ctx.strokeStyle = element.borderColor;
+    ctx.lineWidth = 1;
+    ctx.fillRect(element.x, element.y, element.width, element.height);
+    ctx.strokeRect(element.x, element.y, element.width, element.height);
+
+    if (element.isSelected) {
+      ctx.strokeStyle = "#2563eb";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(element.x, element.y, element.width, element.height);
+    }
+
+    ctx.restore();
+  }
+
+  function isTransparentFillColor(fillColor: string): boolean {
+    const normalized = fillColor.trim().toLowerCase();
+    return (
+      normalized === "transparent" ||
+      normalized === "rgba(0, 0, 0, 0)" ||
+      normalized === "rgba(0,0,0,0)"
+    );
   }
 
   function drawResizeHandles(ctx: CanvasRenderingContext2D) {
@@ -251,6 +310,17 @@
     const worldPoint = controller.toWorld(point);
     onCursorWorldChange(worldPoint);
 
+    if (event.button === 0) {
+      const linkUrl = getTextElementLinkAtPoint(worldPoint);
+      if (linkUrl) {
+        const safeUrl = toSafeExternalUrl(linkUrl);
+        if (safeUrl) {
+          window.open(safeUrl, "_blank", "noopener,noreferrer");
+          return;
+        }
+      }
+    }
+
     const now = Date.now();
     const withinTime = now - lastClickTimestamp <= 450;
     const withinDistance =
@@ -281,6 +351,54 @@
       additiveSelection: event.shiftKey,
       isPanGesture: event.altKey || event.button === 1,
     });
+  }
+
+  function getTextElementLinkAtPoint(worldPoint: Point): string | null {
+    const element = controller.getElementAt(worldPoint);
+    if (!(element instanceof TextElement)) {
+      return null;
+    }
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      return null;
+    }
+
+    return getMarkdownLinkAtPoint(ctx, {
+      text: element.text,
+      x: element.x,
+      y: element.y,
+      width: element.width,
+      height: element.height,
+      fontSize: element.fontSize,
+      fontWeight: element.fontWeight,
+      textAlign: element.textAlign,
+      textColor: element.textColor,
+      paddingX: 8,
+      paddingTop: 6,
+      point: worldPoint,
+    });
+  }
+
+  function toSafeExternalUrl(rawUrl: string): string | null {
+    const trimmed = rawUrl.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    try {
+      const url = new URL(trimmed, window.location.origin);
+      if (
+        url.protocol === "http:" ||
+        url.protocol === "https:" ||
+        url.protocol === "mailto:"
+      ) {
+        return url.href;
+      }
+      return null;
+    } catch {
+      return null;
+    }
   }
 
   function handlePointerMove(event: PointerEvent) {
