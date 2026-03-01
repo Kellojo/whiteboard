@@ -3,6 +3,7 @@
   import logOutIcon from "@iconify-icons/lucide/log-out";
   import moonIcon from "@iconify-icons/lucide/moon";
   import sunIcon from "@iconify-icons/lucide/sun";
+  import { onNavigate } from "$app/navigation";
   import { goto } from "$app/navigation";
   import { authClient } from "$lib/auth-client";
   import Button from "$lib/ui/Button.svelte";
@@ -27,6 +28,22 @@
   function toggleTheme(): void {
     applyTheme(themeMode === "dark" ? "light" : "dark");
   }
+
+  onNavigate((navigation) => {
+    if (
+      typeof document.startViewTransition !== "function" ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+
+    return new Promise<void>((resolve) => {
+      document.startViewTransition(async () => {
+        resolve();
+        await navigation.complete;
+      });
+    });
+  });
 
   async function signOut(): Promise<void> {
     await authClient.signOut();
