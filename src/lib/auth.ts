@@ -23,6 +23,25 @@ function resolveBaseUrl(): string {
 
 const baseURL = resolveBaseUrl();
 
+function resolveAuthSecret(): string {
+  const secret = process.env.BETTER_AUTH_SECRET;
+  if (secret) {
+    return secret;
+  }
+
+  if (process.env.npm_lifecycle_event === "build") {
+    return "build-only-secret";
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("BETTER_AUTH_SECRET must be set in production.");
+  }
+
+  return "local-dev-secret";
+}
+
+const secret = resolveAuthSecret();
+
 function envFlagEnabled(name: string, defaultValue = true): boolean {
   const value = process.env[name];
 
@@ -40,6 +59,7 @@ export const emailPasswordAuthEnabled = envFlagEnabled(
 
 export const auth = betterAuth({
   database,
+  secret,
   baseURL,
   emailAndPassword: {
     enabled: emailPasswordAuthEnabled,
