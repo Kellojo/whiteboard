@@ -56,7 +56,7 @@
   <main class="auth-page">
     <section class="auth-card">
       <h1>Sign in</h1>
-      <p>Access your whiteboards.</p>
+      <p>Access your whiteboards</p>
 
       {#if data.emailPasswordAuthEnabled}
         <form
@@ -90,7 +90,7 @@
           </Button>
         </form>
       {:else}
-        <p>Email/password sign-in is disabled.</p>
+        <p>Email/password sign-in is disabled</p>
       {/if}
 
       {#if data.providers.length > 0}
