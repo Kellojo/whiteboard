@@ -192,7 +192,7 @@
           <Button
             type="button"
             icon
-            iconSize="md"
+            iconSize="lg"
             active={openDrawWidthPicker}
             class="width-trigger"
             aria-label="Drawing width"
@@ -249,7 +249,7 @@
           <Button
             type="button"
             icon
-            iconSize="md"
+            iconSize="lg"
             active={openDrawColorPicker}
             class="color-trigger"
             aria-label="Drawing color"

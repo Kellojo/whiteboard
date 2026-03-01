@@ -15,7 +15,7 @@
     disabled?: boolean;
     fullWidth?: boolean;
     icon?: boolean;
-    iconSize?: "sm" | "md";
+    iconSize?: "sm" | "md" | "lg";
     active?: boolean;
     size?: "md" | "compact" | "tiny";
     class?: string;
@@ -72,6 +72,11 @@
 
   .button-root--icon-md {
     width: 2.625rem;
+    height: 2.625rem;
+  }
+
+  .button-root--icon-lg {
+    width: 3.5rem;
     height: 2.625rem;
   }
 
