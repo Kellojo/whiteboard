@@ -14,6 +14,7 @@
   import { SerializationService } from "../application/SerializationService";
   import { VideoElement } from "../domain/VideoElement";
   import type { CanvasElementJSON, Point } from "../domain/types";
+  import { setThemeAwareTextColorEnabled } from "../themeTextColor";
   import { board, selectedElementIds, viewport } from "../stores";
   import CanvasRenderer from "./CanvasRenderer.svelte";
   import IconBrowser from "./IconBrowser.svelte";
@@ -27,6 +28,7 @@
 
   const controller = new BoardController(board, viewport, selectedElementIds);
   const THEME_STORAGE_KEY = "whiteboard-theme";
+  const TEXT_CONTRAST_ASSIST_STORAGE_KEY = "whiteboard-text-contrast-assist";
 
   let cursorWorld: Point = { x: 0, y: 0 };
   let themeMode = $state<"light" | "dark">("dark");
@@ -39,6 +41,7 @@
   let freeDrawColor = $state(controller.getFreeDrawColor());
   let freeDrawStrokeWidth = $state(controller.getFreeDrawStrokeWidth());
   let snapEnabled = $state(true);
+  let textContrastAssistEnabled = $state(true);
   let isBoardLoading = $state(false);
   let autosaveTimer = $state<ReturnType<typeof setTimeout> | null>(null);
   let hasLoadedRemoteBoard = $state(false);
@@ -283,6 +286,19 @@
     controller.setSnappingEnabled(snapEnabled);
   }
 
+  function applyTextContrastAssistEnabled(enabled: boolean) {
+    textContrastAssistEnabled = enabled;
+    setThemeAwareTextColorEnabled(enabled);
+    localStorage.setItem(
+      TEXT_CONTRAST_ASSIST_STORAGE_KEY,
+      enabled ? "true" : "false",
+    );
+  }
+
+  function handleToggleTextContrastAssist() {
+    applyTextContrastAssistEnabled(!textContrastAssistEnabled);
+  }
+
   function handleExport() {
     const boardState = get(board);
     const payload = SerializationService.exportBoard(boardState, {
@@ -380,6 +396,11 @@
       ).matches;
       setTheme(prefersDark ? "dark" : "light");
     }
+
+    const storedTextContrastAssist = localStorage.getItem(
+      TEXT_CONTRAST_ASSIST_STORAGE_KEY,
+    );
+    applyTextContrastAssistEnabled(storedTextContrastAssist !== "false");
 
     window.addEventListener("keydown", handleKeydown);
     window.addEventListener("paste", handlePaste);
@@ -755,6 +776,8 @@
     onToggleIconBrowser={handleToggleIconBrowser}
     {snapEnabled}
     onToggleSnapping={handleToggleSnapping}
+    {textContrastAssistEnabled}
+    onToggleTextContrastAssist={handleToggleTextContrastAssist}
     onExport={handleExport}
     onImport={handleImport}
     {themeMode}

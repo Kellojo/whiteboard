@@ -8,6 +8,8 @@
   import headingIcon from "@iconify-icons/lucide/heading-1";
   import stickyIcon from "@iconify-icons/lucide/sticky-note";
   import backIcon from "@iconify-icons/lucide/arrow-left";
+  import eyeIcon from "@iconify-icons/lucide/eye";
+  import eyeOffIcon from "@iconify-icons/lucide/eye-off";
   import magnetIcon from "@iconify-icons/lucide/magnet";
   import paletteIcon from "@iconify-icons/lucide/palette";
   import pencilIcon from "@iconify-icons/lucide/pencil";
@@ -43,6 +45,8 @@
     onToggleIconBrowser,
     snapEnabled,
     onToggleSnapping,
+    textContrastAssistEnabled,
+    onToggleTextContrastAssist,
     onExport,
     onImport,
   }: {
@@ -59,6 +63,8 @@
     onToggleIconBrowser: () => void;
     snapEnabled: boolean;
     onToggleSnapping: () => void;
+    textContrastAssistEnabled: boolean;
+    onToggleTextContrastAssist: () => void;
     onExport: () => void;
     onImport: (event: Event) => void;
     themeMode: "light" | "dark";
@@ -154,6 +160,25 @@
       onclick={onToggleSnapping}
     >
       <Icon icon={magnetIcon} width="18" height="18" />
+    </Button>
+    <Button
+      type="button"
+      icon
+      iconSize="sm"
+      active={textContrastAssistEnabled}
+      aria-label={textContrastAssistEnabled
+        ? "Disable text contrast assist"
+        : "Enable text contrast assist"}
+      title={textContrastAssistEnabled
+        ? "Text contrast assist on"
+        : "Text contrast assist off"}
+      onclick={onToggleTextContrastAssist}
+    >
+      <Icon
+        icon={textContrastAssistEnabled ? eyeIcon : eyeOffIcon}
+        width="18"
+        height="18"
+      />
     </Button>
     <Button
       type="button"

@@ -1,5 +1,6 @@
 import { CanvasElement } from "./CanvasElement";
 import { drawMarkdownText } from "./markdownCanvas";
+import { resolveThemeAwareTextColor } from "../themeTextColor";
 import type { CanvasElementJSON, FontWeight, Point, TextAlign } from "./types";
 
 export class TextElement extends CanvasElement {
@@ -40,6 +41,11 @@ export class TextElement extends CanvasElement {
     ctx.fillRect(this.x, this.y, this.width, this.height);
     ctx.strokeRect(this.x, this.y, this.width, this.height);
 
+    const renderedTextColor = resolveThemeAwareTextColor(
+      this.textColor,
+      this.fillColor,
+    );
+
     drawMarkdownText(ctx, {
       text: this.text,
       x: this.x,
@@ -49,7 +55,7 @@ export class TextElement extends CanvasElement {
       fontSize: this.fontSize,
       fontWeight: this.fontWeight,
       textAlign: this.textAlign,
-      textColor: this.textColor,
+      textColor: renderedTextColor,
       paddingX: 8,
       paddingTop: 6,
     });

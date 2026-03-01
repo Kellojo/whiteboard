@@ -1,6 +1,7 @@
 <script lang="ts">
   import { tick } from "svelte";
   import type { EditableTextTarget } from "../application/BoardController";
+  import { resolveThemeAwareTextColor } from "../themeTextColor";
   import type { ViewportState } from "../stores";
 
   let {
@@ -152,7 +153,7 @@
       fontSize: calibratedFontSize,
       textAlign: editor.textAlign,
       fontWeight: editor.fontWeight,
-      color: editor.textColor,
+      color: resolveThemeAwareTextColor(editor.textColor, editor.fillColor),
       background: resolveEditorBackground(editor.fillColor),
       borderColor: editor.borderColor,
       borderWidth,
