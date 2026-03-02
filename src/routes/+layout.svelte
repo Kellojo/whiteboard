@@ -118,6 +118,19 @@
   </Button>
 </div>
 
+{#if !page.url.pathname.startsWith("/whiteboard")}
+  <a
+    class="site-watermark"
+    href="https://github.com/Kellojo/whiteboard"
+    target="_blank"
+    rel="noopener noreferrer"
+    title={`Open repository on GitHub (v${__APP_VERSION__})`}
+  >
+    <span class="repo">Kellojo/whiteboard</span>
+    <span class="ver">v{__APP_VERSION__}</span>
+  </a>
+{/if}
+
 <style>
   .top-actions {
     position: fixed;
@@ -149,5 +162,42 @@
 
   :global(.top-action-signout span) {
     line-height: 1;
+  }
+
+  .site-watermark {
+    position: fixed;
+    left: 50%;
+    bottom: 0.5rem;
+    transform: translateX(-50%);
+    z-index: 80;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    color: var(--app-text-muted);
+    background: transparent;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.375rem;
+    text-decoration: none;
+    opacity: 0.3;
+    transition:
+      opacity 120ms ease,
+      transform 120ms ease;
+    pointer-events: auto;
+  }
+
+  .site-watermark:hover {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-1px);
+  }
+
+  .site-watermark .repo {
+    font-weight: 600;
+  }
+
+  .site-watermark .ver {
+    color: var(--app-text-muted);
+    font-weight: 400;
+    font-size: 0.6875rem;
   }
 </style>
