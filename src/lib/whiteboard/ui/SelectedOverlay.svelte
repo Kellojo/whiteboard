@@ -296,7 +296,7 @@
 <style>
   .selected-toolbar {
     position: absolute;
-    transform: translateX(-50%);
+    transform: translate(-50%, -0.5rem);
     z-index: var(--z-overlay);
     display: flex;
     align-items: center;
