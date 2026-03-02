@@ -150,6 +150,9 @@
         <Icon icon={backIcon} width="18" height="18" />
       </Button>
     {/if}
+
+    <div class="tool-separator" aria-hidden="true"></div>
+
     <Button
       type="button"
       icon
@@ -180,6 +183,9 @@
         height="18"
       />
     </Button>
+
+    <div class="tool-separator" aria-hidden="true"></div>
+
     <Button
       type="button"
       icon
@@ -190,11 +196,13 @@
     >
       <Icon icon={exportIcon} width="18" height="18" />
     </Button>
+
     <label class="import-button" aria-label="Import JSON" title="Import JSON">
       <Icon icon={importIcon} width="18" height="18" />
       <input type="file" accept="application/json" onchange={onImport} />
     </label>
   </div>
+
   <div class="tools">
     <div class="pen-group" class:open={freeDrawMode}>
       <Button
