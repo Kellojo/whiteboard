@@ -27,15 +27,21 @@ export class VideoElement extends CanvasElement {
       const url = new URL(withProtocol);
       const host = url.hostname.toLowerCase();
 
-      if (host.includes("youtu.be")) {
+      if (host === "youtu.be") {
         const id = url.pathname.split("/").filter(Boolean)[0] ?? "";
         return /^[a-zA-Z0-9_-]{11}$/.test(id) ? id : null;
       }
 
-      if (
-        host.includes("youtube.com") ||
-        host.includes("youtube-nocookie.com")
-      ) {
+      const allowedYouTubeHosts = new Set([
+        "youtube.com",
+        "www.youtube.com",
+        "m.youtube.com",
+        "music.youtube.com",
+        "youtube-nocookie.com",
+        "www.youtube-nocookie.com",
+      ]);
+
+      if (allowedYouTubeHosts.has(host)) {
         const direct = url.searchParams.get("v") ?? "";
         if (/^[a-zA-Z0-9_-]{11}$/.test(direct)) {
           return direct;
