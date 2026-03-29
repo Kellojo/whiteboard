@@ -81,6 +81,7 @@ Contributions are very welcome! If you want to contribute, please open an issue 
 
 Things that would be nice to have:
 
+- Store embedded images in a storage bucket/dedicated API to reduce board size and facilitate better caching
 - More shapes (e.g. circles, arrows, ...)
 - More text formatting options (e.g. italic, underline, ...)
 - More image editing options (e.g. cropping, rotating, ...)
