@@ -30,6 +30,7 @@
   "dependencies": {
     "better-auth": "^1.5.3",
     "better-sqlite3": "^12.6.2",
+    "link-preview-js": "^4.0.0",
     "markdown-it": "^14.1.1"
   }
 }
