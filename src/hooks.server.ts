@@ -1,3 +1,8 @@
+import { initMigrationIfNeeded } from "$lib/server/imageStore";
+
+// ensure migration runs when server starts (module load)
+void initMigrationIfNeeded();
+
 import { building } from "$app/environment";
 import { redirect, type Handle } from "@sveltejs/kit";
 import { svelteKitHandler } from "better-auth/svelte-kit";

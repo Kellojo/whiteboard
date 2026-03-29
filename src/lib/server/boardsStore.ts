@@ -8,6 +8,7 @@ import {
 } from "node:fs/promises";
 import { join } from "node:path";
 import type { BoardJSON } from "$lib/whiteboard/domain/Board";
+import { extractImagesFromPayload, initMigrationIfNeeded } from "./imageStore";
 
 export interface StoredBoardMeta {
   id: string;
@@ -49,6 +50,9 @@ function makeId(): string {
 async function ensureStorageDir(): Promise<void> {
   await mkdir(STORAGE_DIR, { recursive: true });
 }
+
+// run migration on module load (server startup)
+void initMigrationIfNeeded();
 
 function defaultPayload(): BoardJSON {
   return {
@@ -170,6 +174,12 @@ export async function saveBoardPayload(
   const existing = await readBoardById(id);
   if (!existing) {
     return null;
+  }
+  // Extract embedded images on save (server-side) to reduce persisted JSON size
+  try {
+    payload = await extractImagesFromPayload(payload);
+  } catch (err) {
+    console.error("image extract error", err);
   }
 
   const updated: StoredBoard = {

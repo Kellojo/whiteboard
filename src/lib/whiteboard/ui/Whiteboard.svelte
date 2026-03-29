@@ -305,17 +305,31 @@
   }
 
   function handleExport() {
-    const boardState = get(board);
-    const payload = SerializationService.exportBoard(boardState, {
-      viewport: get(viewport),
-    });
-    const blob = new Blob([payload], { type: "application/json" });
-    const href = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = href;
-    link.download = `whiteboard-${new Date().toISOString().slice(0, 19).replace(/:/g, "-")}.json`;
-    link.click();
-    URL.revokeObjectURL(href);
+    // Always use server-side export which embeds images into the JSON
+    if (!boardId) {
+      console.error("No boardId for export");
+      return;
+    }
+
+    void (async () => {
+      try {
+        const res = await fetch(`/api/boards/${boardId}/export`);
+        if (!res.ok) throw new Error("Export failed");
+        const result = await res.json();
+        const payload = JSON.stringify(
+          result.board?.payload ?? result.board ?? {},
+        );
+        const blob = new Blob([payload], { type: "application/json" });
+        const href = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = href;
+        link.download = `whiteboard-${boardId}-${new Date().toISOString().slice(0, 19).replace(/:/g, "-")}.json`;
+        link.click();
+        URL.revokeObjectURL(href);
+      } catch (err) {
+        console.error("Export failed", err);
+      }
+    })();
   }
 
   async function handleImport(event: Event) {
@@ -541,9 +555,26 @@
 
   async function addImageFilesAt(files: File[], worldPoint: Point) {
     for (const file of files) {
-      const imageDataUrl = await fileToDataUrl(file);
-      const naturalSize = await readImageSize(imageDataUrl);
-      controller.addImageElement(imageDataUrl, worldPoint, naturalSize);
+      try {
+        const compressedDataUrl = await compressImageFile(file);
+        const naturalSize = await readImageSize(compressedDataUrl);
+
+        // try upload to server; fallback to data URL
+        let imageRef = compressedDataUrl;
+        try {
+          const blob = dataUrlToBlob(compressedDataUrl);
+          const uploaded = await uploadImageBlob(blob, file.name, naturalSize);
+          if (uploaded?.url) {
+            imageRef = uploaded.url;
+          }
+        } catch (err) {
+          console.warn("upload failed, using inline data url", err);
+        }
+
+        controller.addImageElement(imageRef, worldPoint, naturalSize);
+      } catch (err) {
+        console.error("failed to add image", err);
+      }
     }
   }
 
@@ -572,6 +603,114 @@
       reader.onerror = () => reject(new Error("Failed to read image file"));
       reader.readAsDataURL(file);
     });
+  }
+
+  async function compressImageFile(
+    file: File,
+    maxWidth = 1920,
+    maxHeight = 1920,
+    quality = 0.8,
+  ): Promise<string> {
+    // Keep SVGs as-is
+    if (file.type === "image/svg+xml") {
+      return fileToDataUrl(file);
+    }
+
+    const originalDataUrl = await fileToDataUrl(file);
+
+    // Decode image
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("Failed to decode image"));
+      img.src = originalDataUrl;
+    });
+
+    const naturalWidth = image.naturalWidth || image.width || maxWidth;
+    const naturalHeight = image.naturalHeight || image.height || maxHeight;
+
+    const scale = Math.min(
+      1,
+      maxWidth / naturalWidth,
+      maxHeight / naturalHeight,
+    );
+    const width = Math.max(1, Math.round(naturalWidth * scale));
+    const height = Math.max(1, Math.round(naturalHeight * scale));
+
+    if (width === naturalWidth && height === naturalHeight) {
+      // If no resize needed, still try to re-encode to better format/quality
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      return originalDataUrl;
+    }
+    ctx.drawImage(image, 0, 0, width, height);
+
+    // Prefer WebP where possible, fallback to JPEG
+    try {
+      const webp = canvas.toDataURL("image/webp", quality);
+      if (webp && webp.startsWith("data:image")) {
+        return webp;
+      }
+    } catch {
+      // ignore and try jpeg
+    }
+
+    try {
+      const jpeg = canvas.toDataURL("image/jpeg", quality);
+      if (jpeg && jpeg.startsWith("data:image")) {
+        return jpeg;
+      }
+    } catch {
+      // fallback to original
+    }
+
+    return originalDataUrl;
+  }
+
+  function dataUrlToBlob(dataUrl: string): Blob {
+    const parts = dataUrl.split(",");
+    const meta = parts[0];
+    const base64 = parts[1];
+    const mimeMatch = /data:([a-zA-Z0-9/+-\.]+);base64/.exec(meta);
+    const mime = mimeMatch ? mimeMatch[1] : "application/octet-stream";
+    const binary = atob(base64);
+    const len = binary.length;
+    const u8 = new Uint8Array(len);
+    for (let i = 0; i < len; i++) u8[i] = binary.charCodeAt(i);
+    return new Blob([u8], { type: mime });
+  }
+
+  async function uploadImageBlob(
+    blob: Blob,
+    filename: string,
+    size: { width: number; height: number },
+  ) {
+    const fd = new FormData();
+    fd.append("file", blob, filename);
+    fd.append("filename", filename);
+    fd.append("width", String(size.width));
+    fd.append("height", String(size.height));
+
+    const res = await fetch("/api/uploads", {
+      method: "POST",
+      body: fd,
+    });
+
+    if (!res.ok) {
+      throw new Error("Upload failed");
+    }
+
+    return (await res.json()) as {
+      id: string;
+      url: string;
+      width?: number;
+      height?: number;
+    };
   }
 
   function readImageSize(
