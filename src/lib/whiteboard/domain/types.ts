@@ -36,4 +36,5 @@ export interface CanvasElementJSON {
   points?: Point[];
   strokeWidth?: number;
   strokeColor?: string;
+  link?: string;
 }

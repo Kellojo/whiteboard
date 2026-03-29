@@ -6,6 +6,7 @@ export class ImageElement extends CanvasElement {
   imageDataUrl: string;
   iconId: string | null;
   iconColor: string | null;
+  link?: string;
   private image: HTMLImageElement | null = null;
   private loaded = false;
   private iconHydrationStarted = false;
@@ -15,12 +16,14 @@ export class ImageElement extends CanvasElement {
       imageDataUrl?: string;
       iconId?: string;
       iconColor?: string;
+      link?: string;
     },
   ) {
     super(params);
     this.imageDataUrl = params.imageDataUrl ?? "";
     this.iconId = params.iconId ?? null;
     this.iconColor = params.iconColor ?? null;
+    this.link = params.link ?? undefined;
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
@@ -66,6 +69,7 @@ export class ImageElement extends CanvasElement {
       imageDataUrl: this.imageDataUrl,
       iconId: this.iconId ?? undefined,
       iconColor: this.iconColor ?? undefined,
+      link: this.link ?? undefined,
     };
   }
 
@@ -75,6 +79,7 @@ export class ImageElement extends CanvasElement {
       imageDataUrl: json.imageDataUrl ?? "",
       iconId: json.iconId,
       iconColor: json.iconColor,
+      link: json.link,
     });
   }
 

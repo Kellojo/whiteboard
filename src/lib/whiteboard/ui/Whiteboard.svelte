@@ -22,6 +22,7 @@
   import SelectedOverlay from "./SelectedOverlay.svelte";
   import VideoModeToolbar from "./VideoModeToolbar.svelte";
   import Toolbar, { type CreateKind } from "./Toolbar.svelte";
+  import externalLinkIcon from "@iconify-icons/lucide/external-link";
   import { createIconSvgData } from "./iconCatalog";
 
   let { boardId = null }: { boardId?: string | null } = $props();
@@ -51,6 +52,7 @@
     x: number;
     y: number;
     style: NonNullable<ReturnType<BoardController["getSelectedStyleState"]>>;
+    link?: string | null;
   } | null>(null);
   let textEditor = $state<EditableTextTarget | null>(null);
   let layerItems = $state<ReturnType<BoardController["getLayerItems"]>>([]);
@@ -73,6 +75,9 @@
     y: number;
     interactive: boolean;
   } | null>(null);
+  let linkOverlays = $state<
+    { id: string; left: number; top: number; zIndex: number; link: string }[]
+  >([]);
 
   function handleCursorWorldChange(point: Point) {
     cursorWorld = point;
@@ -597,14 +602,19 @@
       return null;
     }
 
+    const snap = element.toJSON();
+    const isImage = snap.type === "image";
+
     if (
+      !isImage &&
       !style.controls.fillColor &&
       !style.controls.borderColor &&
       !style.controls.textColor &&
       !style.controls.iconColor &&
       !style.controls.textAlign &&
       !style.controls.fontSize &&
-      !style.controls.fontWeight
+      !style.controls.fontWeight &&
+      !style.controls.link
     ) {
       return null;
     }
@@ -619,6 +629,7 @@
       x: centerX,
       y: Math.max(10, topY - 56),
       style,
+      link: snap.link ?? null,
     };
   }
 
@@ -701,6 +712,23 @@
       textAlign: target.textAlign,
       fontWeight: target.fontWeight,
     };
+  }
+
+  function openExternalUrl(rawUrl: string) {
+    const trimmed = rawUrl.trim();
+    if (!trimmed) return;
+    try {
+      const url = new URL(trimmed, window.location.origin);
+      if (
+        url.protocol === "http:" ||
+        url.protocol === "https:" ||
+        url.protocol === "mailto:"
+      ) {
+        window.open(url.href, "_blank", "noopener,noreferrer");
+      }
+    } catch {
+      // ignore invalid urls
+    }
   }
 
   function commitTextEditor() {
@@ -796,8 +824,30 @@
       onImageDrop={handleImageDrop}
       onIconDrop={handleIconDrop}
       onDoubleClick={handleCanvasDoubleClick}
+      on:linkoverlay={(e) => {
+        linkOverlays = e.detail ?? [];
+      }}
     />
   </div>
+
+  {#each linkOverlays as item (item.id)}
+    <button
+      type="button"
+      class="link-overlay"
+      style:left={`${item.left}px`}
+      style:top={`${item.top}px`}
+      style:z-index={`${item.zIndex}`}
+      title="Open link"
+      onclick={() => openExternalUrl(item.link)}
+    >
+      <Icon
+        icon={externalLinkIcon}
+        width="14"
+        height="14"
+        color="var(--app-text)"
+      />
+    </button>
+  {/each}
 
   {#each videoOverlays as video (video.id)}
     <div
@@ -1127,5 +1177,22 @@
 
   .video-overlay.interactive .video-frame {
     pointer-events: auto;
+  }
+
+  .link-overlay {
+    position: absolute;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-1);
+    border: 0.0625rem solid var(--border-1);
+    box-shadow: var(--shadow-m);
+    backdrop-filter: blur(var(--glass-blur));
+    cursor: pointer;
+    padding: 0.25rem;
+    color: var(--app-text);
   }
 </style>

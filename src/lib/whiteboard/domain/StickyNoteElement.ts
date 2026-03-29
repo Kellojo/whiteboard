@@ -9,6 +9,7 @@ export class StickyNoteElement extends CanvasElement {
   textColor: string;
   textAlign: TextAlign;
   fontWeight: FontWeight;
+  link?: string;
 
   constructor(
     params: ConstructorParameters<typeof CanvasElement>[0] & {
@@ -19,6 +20,7 @@ export class StickyNoteElement extends CanvasElement {
       textColor?: string;
       textAlign?: TextAlign;
       fontWeight?: FontWeight;
+      link?: string;
     },
   ) {
     super(params);
@@ -29,6 +31,7 @@ export class StickyNoteElement extends CanvasElement {
     this.textColor = params.textColor ?? "#1f2937";
     this.textAlign = "center";
     this.fontWeight = params.fontWeight ?? "normal";
+    this.link = params.link ?? undefined;
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
@@ -95,11 +98,12 @@ export class StickyNoteElement extends CanvasElement {
       textColor: this.textColor,
       textAlign: this.textAlign,
       fontWeight: this.fontWeight,
+      link: this.link ?? undefined,
     };
   }
 
   static fromJSON(json: CanvasElementJSON): StickyNoteElement {
-    return new StickyNoteElement(json);
+    return new StickyNoteElement({ ...json, link: json.link });
   }
 }
 

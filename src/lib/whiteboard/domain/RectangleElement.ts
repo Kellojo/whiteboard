@@ -4,16 +4,19 @@ import type { CanvasElementJSON, Point } from "./types";
 export class RectangleElement extends CanvasElement {
   fillColor: string;
   borderColor: string;
+  link?: string;
 
   constructor(
     params: ConstructorParameters<typeof CanvasElement>[0] & {
       fillColor?: string;
       borderColor?: string;
+      link?: string;
     },
   ) {
     super(params);
     this.fillColor = params.fillColor ?? "#dbeafe";
     this.borderColor = params.borderColor ?? "#1e3a8a";
+    this.link = params.link ?? undefined;
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
@@ -52,10 +55,11 @@ export class RectangleElement extends CanvasElement {
       isSelected: this.isSelected,
       fillColor: this.fillColor,
       borderColor: this.borderColor,
+      link: this.link ?? undefined,
     };
   }
 
   static fromJSON(json: CanvasElementJSON): RectangleElement {
-    return new RectangleElement(json);
+    return new RectangleElement({ ...json, link: json.link });
   }
 }

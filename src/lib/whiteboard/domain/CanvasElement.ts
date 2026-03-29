@@ -7,6 +7,7 @@ export interface StyleControlOptions {
   textAlign: boolean;
   fontSize: boolean;
   fontWeight: boolean;
+  link: boolean;
 }
 
 export abstract class CanvasElement {
@@ -55,6 +56,7 @@ export abstract class CanvasElement {
       fontSize: typeof element.fontSize === "number",
       fontWeight:
         element.fontWeight === "normal" || element.fontWeight === "bold",
+      link: "link" in element || typeof (element as any).link === "string",
     };
   }
 
