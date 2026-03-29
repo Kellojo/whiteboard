@@ -1,7 +1,7 @@
 import { join, extname } from "path";
 import { stat, readdir, readFile } from "fs/promises";
 
-function mimeFromExt(ext) {
+function mimeFromExt(ext: string): string {
   switch (ext.toLowerCase()) {
     case ".png":
       return "image/png";
@@ -19,7 +19,7 @@ function mimeFromExt(ext) {
   }
 }
 
-async function findFileById(dir, id) {
+async function findFileById(dir: string, id: string): Promise<string | null> {
   try {
     const files = await readdir(dir);
     for (const f of files) {
@@ -32,7 +32,7 @@ async function findFileById(dir, id) {
   return null;
 }
 
-export async function GET({ params }) {
+export async function GET({ params }: { params: { id: string } }) {
   const { id } = params;
   const cwd = process.cwd();
   const candidates = [
