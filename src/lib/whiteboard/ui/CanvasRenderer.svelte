@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, createEventDispatcher } from "svelte";
   import type {
     BoardController,
     EditableTextTarget,
@@ -57,6 +57,8 @@
     frame = requestAnimationFrame(render);
     return () => cancelAnimationFrame(frame);
   });
+
+  const dispatch = createEventDispatcher();
 
   function draw() {
     if (!canvas) {
@@ -403,10 +405,42 @@
 
   function handlePointerMove(event: PointerEvent) {
     const point = screenPoint(event);
-    onCursorWorldChange(controller.toWorld(point));
+    const world = controller.toWorld(point);
+    onCursorWorldChange(world);
+
+    // compute hover overlay for elements with links
+    const hovered = controller.getElementAt(world);
+    const dpr = window.devicePixelRatio || 1;
+    if (
+      hovered &&
+      typeof (hovered as unknown as Record<string, unknown>).link ===
+        "string" &&
+      (hovered as unknown as Record<string, string>).link?.trim()
+    ) {
+      const link = (hovered as unknown as Record<string, string>)
+        .link as string;
+      const overlayPx = 36; // overlay visual size (px) to position inside element
+      const left =
+        ((hovered.x + hovered.width + viewport.offsetX) * viewport.zoom) / dpr -
+        overlayPx;
+      const top = ((hovered.y + viewport.offsetY) * viewport.zoom) / dpr + 6;
+      dispatch("linkoverlay", [
+        {
+          id: hovered.id,
+          left,
+          top,
+          zIndex: 60,
+          link,
+        },
+      ]);
+    } else {
+      dispatch("linkoverlay", []);
+    }
+
     if (!isPointerDown) {
       return;
     }
+
     controller.onPointerMove(point);
   }
 

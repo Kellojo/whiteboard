@@ -63,6 +63,7 @@ export interface SelectedStyleState {
     textAlign: boolean;
     fontSize: boolean;
     fontWeight: boolean;
+    link: boolean;
   };
   fillColor: string | null;
   borderColor: string | null;
@@ -828,6 +829,8 @@ export class BoardController {
     const hasIconColor = iconColor !== null;
     const hasFontSize = fontSize !== null;
     const hasFontWeight = fontWeight !== null;
+    const hasLink =
+      "link" in selected || typeof (selected as any).link === "string";
 
     return {
       controls: {
@@ -838,6 +841,7 @@ export class BoardController {
         textAlign: controls.textAlign && hasTextAlign,
         fontSize: controls.fontSize && hasFontSize,
         fontWeight: controls.fontWeight && hasFontWeight,
+        link: controls.link && hasLink,
       },
       fillColor,
       borderColor,
@@ -952,6 +956,18 @@ export class BoardController {
       }
       if ("textAlign" in element) {
         element.textAlign = textAlign;
+      }
+    });
+  }
+
+  setSelectedLink(link: string | null): void {
+    this.applyStyleToSingleSelected((element) => {
+      try {
+        // Allow setting/removing link on arbitrary elements that support it
+        (element as unknown as Record<string, unknown>).link =
+          link && link.trim().length > 0 ? link.trim() : undefined;
+      } catch {
+        // ignore
       }
     });
   }

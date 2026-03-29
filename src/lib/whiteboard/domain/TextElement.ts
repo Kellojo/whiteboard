@@ -11,6 +11,7 @@ export class TextElement extends CanvasElement {
   textColor: string;
   textAlign: TextAlign;
   fontWeight: FontWeight;
+  link?: string;
 
   constructor(
     params: ConstructorParameters<typeof CanvasElement>[0] & {
@@ -21,6 +22,7 @@ export class TextElement extends CanvasElement {
       textColor?: string;
       textAlign?: TextAlign;
       fontWeight?: FontWeight;
+      link?: string;
     },
   ) {
     super(params);
@@ -31,6 +33,7 @@ export class TextElement extends CanvasElement {
     this.textColor = params.textColor ?? "#111827";
     this.textAlign = params.textAlign ?? "left";
     this.fontWeight = params.fontWeight ?? "normal";
+    this.link = params.link ?? undefined;
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
@@ -93,10 +96,11 @@ export class TextElement extends CanvasElement {
       textColor: this.textColor,
       textAlign: this.textAlign,
       fontWeight: this.fontWeight,
+      link: this.link ?? undefined,
     };
   }
 
   static fromJSON(json: CanvasElementJSON): TextElement {
-    return new TextElement(json);
+    return new TextElement({ ...json, link: json.link });
   }
 }

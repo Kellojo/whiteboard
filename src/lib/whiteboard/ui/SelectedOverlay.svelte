@@ -17,6 +17,7 @@
     SelectedStyleState,
   } from "../application/BoardController";
   import type { TextAlign } from "../domain/types";
+  import linkIcon from "@iconify-icons/lucide/link";
   import {
     BORDER_COLOR_SWATCHES,
     DEFAULT_BORDER_PICKER_COLOR,
@@ -36,6 +37,7 @@
       x: number;
       y: number;
       style: SelectedStyleState;
+      link?: string | null;
     };
     controller: BoardController;
   } = $props();
@@ -58,6 +60,33 @@
   const defaultFillPickerColor = DEFAULT_FILL_PICKER_COLOR;
   const defaultTextPickerColor = DEFAULT_TEXT_PICKER_COLOR;
   const defaultIconPickerColor = DEFAULT_ICON_PICKER_COLOR;
+
+  let showLinkControls = $state(false);
+  let currentLink = $state<string | null>(null);
+
+  $effect(() => {
+    overlay;
+    if (!overlay) {
+      showLinkControls = false;
+      currentLink = null;
+      return;
+    }
+    showLinkControls = !!overlay.style.controls.link;
+    currentLink = overlay.link ?? null;
+  });
+
+  function refreshLinkState() {
+    const el = controller.getSingleSelectedElement();
+    if (!el) {
+      showLinkControls = false;
+      currentLink = null;
+      return;
+    }
+    const snap = el.toJSON();
+    const style = controller.getSelectedStyleState();
+    showLinkControls = !!style?.controls.link;
+    currentLink = (snap as { link?: string }).link ?? null;
+  }
 
   function toggleColorPicker(kind: "border" | "fill" | "text" | "icon") {
     openColorPicker = openColorPicker === kind ? null : kind;
@@ -111,6 +140,19 @@
       window.removeEventListener("keydown", handleGlobalKeydown);
     };
   });
+
+  function promptSetLink() {
+    const el = controller.getSingleSelectedElement();
+    if (!el) return;
+    const current = (el as unknown as Record<string, string>).link ?? "";
+    const value = window.prompt(
+      "Enter a URL for this element (leave blank to remove)",
+      current,
+    );
+    if (value === null) return;
+    controller.setSelectedLink(value.trim() ? value.trim() : null);
+    refreshLinkState();
+  }
 </script>
 
 <div
@@ -276,6 +318,26 @@
           placement="below-left"
           onSelect={(color) => applyColorSelection("icon", color)}
         />
+      {/if}
+    </div>
+  {/if}
+
+  {#if showLinkControls}
+    <div class="mini-group">
+      <button type="button" title="Set link" onclick={promptSetLink}>
+        <Icon icon={linkIcon} width="14" height="14" />
+      </button>
+      {#if currentLink}
+        <button
+          type="button"
+          title="Clear link"
+          onclick={() => {
+            controller.setSelectedLink(null);
+            refreshLinkState();
+          }}
+        >
+          <Icon icon={minusIcon} width="14" height="14" />
+        </button>
       {/if}
     </div>
   {/if}

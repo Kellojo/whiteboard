@@ -4,16 +4,19 @@ import type { CanvasElementJSON, Point } from "./types";
 export class EllipseElement extends CanvasElement {
   fillColor: string;
   borderColor: string;
+  link?: string;
 
   constructor(
     params: ConstructorParameters<typeof CanvasElement>[0] & {
       fillColor?: string;
       borderColor?: string;
+      link?: string;
     },
   ) {
     super(params);
     this.fillColor = params.fillColor ?? "#dcfce7";
     this.borderColor = params.borderColor ?? "#166534";
+    this.link = params.link ?? undefined;
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
@@ -66,10 +69,11 @@ export class EllipseElement extends CanvasElement {
       isSelected: this.isSelected,
       fillColor: this.fillColor,
       borderColor: this.borderColor,
+      link: this.link ?? undefined,
     };
   }
 
   static fromJSON(json: CanvasElementJSON): EllipseElement {
-    return new EllipseElement(json);
+    return new EllipseElement({ ...json, link: json.link });
   }
 }
